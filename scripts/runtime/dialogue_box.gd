@@ -2,6 +2,7 @@ class_name DialogueBox
 extends CanvasLayer
 ## Runtime dialogue box. Displays text and choices, emits signals when done.
 
+var _root: Control
 var _text_label: RichTextLabel
 var _name_label: Label
 var _panel: PanelContainer
@@ -12,28 +13,20 @@ var _is_showing: bool = false
 func _ready() -> void:
 	layer = 10
 	_build_ui()
+	_sync_layout()
 	_panel.hide()
 	SignalBus.dialogue_requested.connect(_on_dialogue_requested)
 	SignalBus.choices_requested.connect(_on_choices_requested)
+	get_viewport().size_changed.connect(_sync_layout)
 
 
 func _build_ui() -> void:
-	# Full-screen Control anchor so children can position relative to viewport.
-	var root := Control.new()
-	root.set_anchors_preset(Control.PRESET_FULL_RECT)
-	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(root)
+	_root = Control.new()
+	_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_root)
 
-	# Panel at bottom of screen.
 	_panel = PanelContainer.new()
-	_panel.anchor_left = 0.0
-	_panel.anchor_right = 1.0
-	_panel.anchor_top = 1.0
-	_panel.anchor_bottom = 1.0
-	_panel.offset_top = -160.0
-	_panel.offset_bottom = 0.0
-	_panel.offset_left = 40.0
-	_panel.offset_right = -40.0
+	_panel.mouse_filter = Control.MOUSE_FILTER_STOP
 
 	var style := StyleBoxFlat.new()
 	style.bg_color = DesignTokens.COLOR_BG_SURFACE
@@ -65,6 +58,7 @@ func _build_ui() -> void:
 
 	_text_label = RichTextLabel.new()
 	_text_label.bbcode_enabled = true
+	_text_label.scroll_active = false
 	_text_label.fit_content = true
 	_text_label.custom_minimum_size = Vector2(0, 60)
 	_text_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -73,7 +67,19 @@ func _build_ui() -> void:
 	_choices_container = VBoxContainer.new()
 	vbox.add_child(_choices_container)
 
-	root.add_child(_panel)
+	_root.add_child(_panel)
+
+
+func _sync_layout() -> void:
+	if _root == null or _panel == null:
+		return
+	var viewport_size := get_viewport().get_visible_rect().size
+	_root.position = Vector2.ZERO
+	_root.size = viewport_size
+	var panel_margin := 40.0
+	var panel_height := 160.0
+	_panel.position = Vector2(panel_margin, viewport_size.y - panel_height - panel_margin)
+	_panel.size = Vector2(maxf(320.0, viewport_size.x - panel_margin * 2.0), panel_height)
 
 
 func _on_dialogue_requested(text: String, speaker: String) -> void:
@@ -104,9 +110,7 @@ func _on_choices_requested(choices: Array) -> void:
 
 
 func _on_choice_pressed(index: int) -> void:
-	_clear_choices()
-	_panel.hide()
-	_is_showing = false
+	_close_dialogue()
 	SignalBus.choice_made.emit(index)
 
 
@@ -116,10 +120,19 @@ func _unhandled_input(event: InputEvent) -> void:
 	if _choices_container.get_child_count() > 0:
 		return  # Waiting for choice selection, not key press.
 	if event.is_action_pressed("ui_accept"):
-		_panel.hide()
-		_is_showing = false
+		_close_dialogue()
 		SignalBus.dialogue_finished.emit()
 		get_viewport().set_input_as_handled()
+	elif event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+		_close_dialogue()
+		SignalBus.dialogue_finished.emit()
+		get_viewport().set_input_as_handled()
+
+
+func _close_dialogue() -> void:
+	_clear_choices()
+	_panel.hide()
+	_is_showing = false
 
 
 func _clear_choices() -> void:
