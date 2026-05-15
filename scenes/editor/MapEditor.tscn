@@ -57,7 +57,7 @@ script = ExtResource("2_canvas")
 
 [node name="RightPanel" type="PanelContainer" parent="VSplit/Top"]
 layout_mode = 2
-custom_minimum_size = Vector2(260, 0)
+custom_minimum_size = Vector2(340, 0)
 visible = false
 
 [node name="EventEditorPanel" type="VBoxContainer" parent="VSplit/Top/RightPanel"]
@@ -107,6 +107,28 @@ text = "Self:"
 [node name="SelfSwitchOpt" type="OptionButton" parent="VSplit/Top/RightPanel/EventEditorPanel/PageSettings"]
 layout_mode = 2
 custom_minimum_size = Vector2(60, 0)
+
+[node name="PageConditionsExtra" type="HBoxContainer" parent="VSplit/Top/RightPanel/EventEditorPanel"]
+layout_mode = 2
+
+[node name="VarCondLabel" type="Label" parent="VSplit/Top/RightPanel/EventEditorPanel/PageConditionsExtra"]
+layout_mode = 2
+text = "Var:"
+
+[node name="CondVarSpin" type="SpinBox" parent="VSplit/Top/RightPanel/EventEditorPanel/PageConditionsExtra"]
+layout_mode = 2
+min_value = -1.0
+max_value = 99.0
+value = -1.0
+
+[node name="VarGteLabel" type="Label" parent="VSplit/Top/RightPanel/EventEditorPanel/PageConditionsExtra"]
+layout_mode = 2
+text = "GTE:"
+
+[node name="CondVarValueSpin" type="SpinBox" parent="VSplit/Top/RightPanel/EventEditorPanel/PageConditionsExtra"]
+layout_mode = 2
+min_value = -9999.0
+max_value = 9999.0
 
 [node name="CommandScroll" type="ScrollContainer" parent="VSplit/Top/RightPanel/EventEditorPanel"]
 layout_mode = 2
