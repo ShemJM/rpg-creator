@@ -1,0 +1,83 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/editor/event_editor_panel.gd" id="1_event_editor"]
+
+[node name="EventEditorPanel" type="Control"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_event_editor")
+
+[node name="VBox" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="TitleBar" type="HBoxContainer" parent="VBox"]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="VBox/TitleBar"]
+layout_mode = 2
+text = "No Event Selected"
+size_flags_horizontal = 3
+
+[node name="PageTabs" type="HBoxContainer" parent="VBox/TitleBar"]
+layout_mode = 2
+
+[node name="AddPageBtn" type="Button" parent="VBox/TitleBar"]
+layout_mode = 2
+text = "+ Page"
+
+[node name="PageSettings" type="HBoxContainer" parent="VBox"]
+layout_mode = 2
+
+[node name="TriggerLabel" type="Label" parent="VBox/PageSettings"]
+layout_mode = 2
+text = "Trigger:"
+
+[node name="TriggerOption" type="OptionButton" parent="VBox/PageSettings"]
+layout_mode = 2
+custom_minimum_size = Vector2(120, 0)
+
+[node name="SwitchLabel" type="Label" parent="VBox/PageSettings"]
+layout_mode = 2
+text = "  Cond Switch:"
+
+[node name="CondSwitchSpin" type="SpinBox" parent="VBox/PageSettings"]
+layout_mode = 2
+min_value = -1.0
+max_value = 99.0
+value = -1.0
+
+[node name="SelfSwitchLabel" type="Label" parent="VBox/PageSettings"]
+layout_mode = 2
+text = "  Self Switch:"
+
+[node name="SelfSwitchOpt" type="OptionButton" parent="VBox/PageSettings"]
+layout_mode = 2
+custom_minimum_size = Vector2(80, 0)
+
+[node name="CommandScroll" type="ScrollContainer" parent="VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="CommandList" type="VBoxContainer" parent="VBox/CommandScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="AddCommandBar" type="HBoxContainer" parent="VBox"]
+layout_mode = 2
+
+[node name="AddCmdOption" type="OptionButton" parent="VBox/AddCommandBar"]
+layout_mode = 2
+custom_minimum_size = Vector2(150, 0)
+
+[node name="AddCmdBtn" type="Button" parent="VBox/AddCommandBar"]
+layout_mode = 2
+text = "+ Add Command"

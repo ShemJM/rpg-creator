@@ -1,0 +1,69 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/editor/editor_shell.gd" id="1_shell"]
+
+[node name="EditorShell" type="MarginContainer"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_bottom = 8
+script = ExtResource("1_shell")
+
+[node name="HSplit" type="HSplitContainer" parent="."]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+split_offset = 170
+
+[node name="NavPanel" type="PanelContainer" parent="HSplit"]
+layout_mode = 2
+custom_minimum_size = Vector2(170, 0)
+
+[node name="VBox" type="VBoxContainer" parent="HSplit/NavPanel"]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="HSplit/NavPanel/VBox"]
+layout_mode = 2
+text = "RPG Maker"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 20
+
+[node name="Separator" type="HSeparator" parent="HSplit/NavPanel/VBox"]
+layout_mode = 2
+
+[node name="NavBar" type="VBoxContainer" parent="HSplit/NavPanel/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Maps" type="Button" parent="HSplit/NavPanel/VBox/NavBar"]
+layout_mode = 2
+text = "Maps"
+
+[node name="Database" type="Button" parent="HSplit/NavPanel/VBox/NavBar"]
+layout_mode = 2
+disabled = true
+text = "Database"
+
+[node name="Events" type="Button" parent="HSplit/NavPanel/VBox/NavBar"]
+layout_mode = 2
+disabled = true
+text = "Events"
+
+[node name="Spacer" type="Control" parent="HSplit/NavPanel/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="PlayTestButton" type="Button" parent="HSplit/NavPanel/VBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 44)
+text = "▶ Play-Test"
+
+[node name="ContentArea" type="PanelContainer" parent="HSplit"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3

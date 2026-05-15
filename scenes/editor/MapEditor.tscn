@@ -1,0 +1,166 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/editor/map_editor.gd" id="1_mapeditor"]
+[ext_resource type="Script" path="res://scripts/editor/map_canvas.gd" id="2_canvas"]
+[ext_resource type="Script" path="res://scripts/editor/event_editor_panel.gd" id="3_event_editor"]
+
+[node name="MapEditor" type="VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+script = ExtResource("1_mapeditor")
+
+[node name="VSplit" type="VSplitContainer" parent="."]
+layout_mode = 2
+size_flags_vertical = 3
+split_offset = -80
+
+[node name="Top" type="HSplitContainer" parent="VSplit"]
+layout_mode = 2
+size_flags_vertical = 3
+split_offset = 160
+
+[node name="LeftPanel" type="VBoxContainer" parent="VSplit/Top"]
+layout_mode = 2
+custom_minimum_size = Vector2(160, 0)
+
+[node name="MapsLabel" type="Label" parent="VSplit/Top/LeftPanel"]
+layout_mode = 2
+text = "Maps"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 16
+
+[node name="Sep" type="HSeparator" parent="VSplit/Top/LeftPanel"]
+layout_mode = 2
+
+[node name="MapScroll" type="ScrollContainer" parent="VSplit/Top/LeftPanel"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="MapList" type="VBoxContainer" parent="VSplit/Top/LeftPanel/MapScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="CanvasContainer" type="SubViewportContainer" parent="VSplit/Top"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+stretch = true
+
+[node name="SubViewport" type="SubViewport" parent="VSplit/Top/CanvasContainer"]
+handle_input_locally = true
+size = Vector2i(960, 540)
+render_target_update_mode = 4
+
+[node name="MapCanvas" type="Node2D" parent="VSplit/Top/CanvasContainer/SubViewport"]
+script = ExtResource("2_canvas")
+
+[node name="RightPanel" type="PanelContainer" parent="VSplit/Top"]
+layout_mode = 2
+custom_minimum_size = Vector2(260, 0)
+visible = false
+
+[node name="EventEditorPanel" type="VBoxContainer" parent="VSplit/Top/RightPanel"]
+layout_mode = 2
+script = ExtResource("3_event_editor")
+
+[node name="TitleBar" type="HBoxContainer" parent="VSplit/Top/RightPanel/EventEditorPanel"]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="VSplit/Top/RightPanel/EventEditorPanel/TitleBar"]
+layout_mode = 2
+text = "No Event Selected"
+size_flags_horizontal = 3
+
+[node name="PageTabs" type="HBoxContainer" parent="VSplit/Top/RightPanel/EventEditorPanel/TitleBar"]
+layout_mode = 2
+
+[node name="AddPageBtn" type="Button" parent="VSplit/Top/RightPanel/EventEditorPanel/TitleBar"]
+layout_mode = 2
+text = "+ Page"
+
+[node name="PageSettings" type="HBoxContainer" parent="VSplit/Top/RightPanel/EventEditorPanel"]
+layout_mode = 2
+
+[node name="TriggerLabel" type="Label" parent="VSplit/Top/RightPanel/EventEditorPanel/PageSettings"]
+layout_mode = 2
+text = "Trigger:"
+
+[node name="TriggerOption" type="OptionButton" parent="VSplit/Top/RightPanel/EventEditorPanel/PageSettings"]
+layout_mode = 2
+custom_minimum_size = Vector2(100, 0)
+
+[node name="CondLabel" type="Label" parent="VSplit/Top/RightPanel/EventEditorPanel/PageSettings"]
+layout_mode = 2
+text = "Cond:"
+
+[node name="CondSwitchSpin" type="SpinBox" parent="VSplit/Top/RightPanel/EventEditorPanel/PageSettings"]
+layout_mode = 2
+min_value = -1.0
+max_value = 99.0
+value = -1.0
+
+[node name="SelfSwitchLabel" type="Label" parent="VSplit/Top/RightPanel/EventEditorPanel/PageSettings"]
+layout_mode = 2
+text = "Self:"
+
+[node name="SelfSwitchOpt" type="OptionButton" parent="VSplit/Top/RightPanel/EventEditorPanel/PageSettings"]
+layout_mode = 2
+custom_minimum_size = Vector2(60, 0)
+
+[node name="CommandScroll" type="ScrollContainer" parent="VSplit/Top/RightPanel/EventEditorPanel"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="CommandList" type="VBoxContainer" parent="VSplit/Top/RightPanel/EventEditorPanel/CommandScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="AddCommandBar" type="HBoxContainer" parent="VSplit/Top/RightPanel/EventEditorPanel"]
+layout_mode = 2
+
+[node name="AddCmdOption" type="OptionButton" parent="VSplit/Top/RightPanel/EventEditorPanel/AddCommandBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(120, 0)
+
+[node name="AddCmdBtn" type="Button" parent="VSplit/Top/RightPanel/EventEditorPanel/AddCommandBar"]
+layout_mode = 2
+text = "+ Add"
+
+[node name="Bottom" type="PanelContainer" parent="VSplit"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 64)
+
+[node name="HBox" type="HBoxContainer" parent="VSplit/Bottom"]
+layout_mode = 2
+alignment = 0
+theme_override_constants/separation = 12
+
+[node name="LayerLabel" type="Label" parent="VSplit/Bottom/HBox"]
+layout_mode = 2
+text = "Layer:"
+
+[node name="LayerOption" type="OptionButton" parent="VSplit/Bottom/HBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(120, 0)
+
+[node name="ToolLabel" type="Label" parent="VSplit/Bottom/HBox"]
+layout_mode = 2
+text = "Tool:"
+
+[node name="ToolOption" type="OptionButton" parent="VSplit/Bottom/HBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(120, 0)
+
+[node name="Sep" type="VSeparator" parent="VSplit/Bottom/HBox"]
+layout_mode = 2
+
+[node name="PaletteLabel" type="Label" parent="VSplit/Bottom/HBox"]
+layout_mode = 2
+text = "Tiles:"
+
+[node name="Palette" type="HBoxContainer" parent="VSplit/Bottom/HBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 6
