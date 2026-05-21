@@ -1,0 +1,86 @@
+# Roadmap
+
+Roughly ordered by dependency. Each phase should be independently shippable.
+
+---
+
+## Phase 1 — Save / Load
+
+The most critical gap. Nothing else matters until project data survives a session.
+
+- [ ] Serialize `ProjectState` (maps, events, pages, commands) to JSON
+- [ ] Write to disk at a user-chosen path; load from path on open
+- [ ] Recent projects list in a start screen
+- [ ] Auto-save on play-test
+
+---
+
+## Phase 2 — Real Tilesets
+
+- [ ] Import a tileset image (PNG) and slice into tiles
+- [ ] Store tile passability flag per tile (not hardcoded)
+- [ ] Replace stub colour buttons in the palette with tile thumbnails
+- [ ] Support multiple tilesets per project
+
+---
+
+## Phase 3 — Character Graphics
+
+- [ ] NPC/event sprite: assign a spritesheet + frame index to an event page
+- [ ] Event moves and faces the player on interaction
+- [ ] Player spritesheet with walk animation (4-directional)
+- [ ] Simple 4-frame walk cycle in the runtime
+
+---
+
+## Phase 4 — More Event Commands
+
+Commands that round out the scripting system:
+
+- [ ] `MOVE_ROUTE` — move an event or the player along a path
+- [ ] `SHOW_PICTURE` / `ERASE_PICTURE` — overlay images on screen
+- [ ] `CHANGE_TRANSPARENT` — hide/show the player sprite
+- [ ] `PLAY_BGM` / `STOP_BGM` — background music
+- [ ] `PLAY_SE` (implement) — sound effect playback
+- [ ] `FADE_OUT` / `FADE_IN` (implement) — actual screen colour fade
+- [ ] `GAME_OVER` — return to title
+- [ ] `LABEL` / `JUMP_TO_LABEL` — loop and goto within a command list
+
+---
+
+## Phase 5 — Parallel Events & Event Lifecycle
+
+- [ ] Parallel trigger: run event every frame without blocking the player
+- [ ] Event pages re-evaluate conditions when switches/variables change
+- [ ] `erased` state: event can be permanently removed from the map
+
+---
+
+## Phase 6 — Editor Polish
+
+- [ ] Undo / redo for tile painting and event edits
+- [ ] Map properties panel (resize map, rename)
+- [ ] Copy / paste event pages
+- [ ] Event search / jump-to by ID
+- [ ] Map transfer picker — choose target map and position from a visual picker
+- [ ] In-editor play-test overlay instead of full scene swap
+
+---
+
+## Phase 7 — Battle System (optional / stretch)
+
+If the project grows to include a full RPG loop:
+
+- [ ] Encounter zones — tile flag triggers a random battle
+- [ ] Turn-based battle scene with party vs. enemies
+- [ ] Character stats resource (`HP`, `MP`, `ATK`, `DEF`, `SPD`)
+- [ ] Skills and items as resources
+- [ ] `BATTLE_PROCESSING` event command — start a scripted battle
+- [ ] Win/lose conditions wired back to the event system
+
+---
+
+## Phase 8 — Export
+
+- [ ] Package a project as a standalone Godot `.pck` (runtime-only, no editor)
+- [ ] Export to HTML5 for browser play
