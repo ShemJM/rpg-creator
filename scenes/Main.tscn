@@ -33,6 +33,13 @@ text = "RPG Maker"
 horizontal_alignment = 1
 theme_override_font_sizes/font_size = 20
 
+[node name="ProjectLabel" type="Label" parent="HSplit/NavPanel/VBox"]
+layout_mode = 2
+text = "Untitled"
+horizontal_alignment = 1
+theme_override_colors/font_color = Color(0.533, 0.533, 0.627, 1)
+text_overrun_behavior = 3
+
 [node name="Separator" type="HSeparator" parent="HSplit/NavPanel/VBox"]
 layout_mode = 2
 
@@ -54,9 +61,26 @@ layout_mode = 2
 disabled = true
 text = "Events"
 
+[node name="FileSep" type="HSeparator" parent="HSplit/NavPanel/VBox"]
+layout_mode = 2
+
+[node name="SaveBtn" type="Button" parent="HSplit/NavPanel/VBox"]
+layout_mode = 2
+text = "Save  Ctrl+S"
+
+[node name="SaveAsBtn" type="Button" parent="HSplit/NavPanel/VBox"]
+layout_mode = 2
+text = "Save As…"
+
+[node name="CloseSep" type="HSeparator" parent="HSplit/NavPanel/VBox"]
+layout_mode = 2
+
+[node name="CloseBtn" type="Button" parent="HSplit/NavPanel/VBox"]
+layout_mode = 2
+text = "Close Project"
+
 [node name="Spacer" type="Control" parent="HSplit/NavPanel/VBox"]
 layout_mode = 2
-size_flags_vertical = 3
 
 [node name="PlayTestButton" type="Button" parent="HSplit/NavPanel/VBox"]
 layout_mode = 2

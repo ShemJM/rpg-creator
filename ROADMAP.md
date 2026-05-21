@@ -4,14 +4,14 @@ Roughly ordered by dependency. Each phase should be independently shippable.
 
 ---
 
-## Phase 1 — Save / Load
+## Phase 1 — Save / Load ✓
 
 The most critical gap. Nothing else matters until project data survives a session.
 
-- [ ] Serialize `ProjectState` (maps, events, pages, commands) to JSON
-- [ ] Write to disk at a user-chosen path; load from path on open
-- [ ] Recent projects list in a start screen
-- [ ] Auto-save on play-test
+- [x] Serialize `ProjectState` (maps, events, pages, commands) to JSON
+- [x] Write to disk at a user-chosen path; load from path on open
+- [x] Recent projects list in a start screen
+- [x] Auto-save on play-test
 
 ---
 

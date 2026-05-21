@@ -16,6 +16,10 @@ signal event_selected(event: EventData)
 signal event_placed(event: EventData)
 signal event_mode_toggled(active: bool)
 
+# --- Project ---
+signal project_loaded(path: String)
+signal project_saved(path: String)
+
 # --- Events (runtime) ---
 signal dialogue_requested(text: String, speaker: String)
 signal choices_requested(choices: Array)
