@@ -37,7 +37,7 @@ func _build_ui() -> void:
 	margin.add_child(vbox)
 
 	var title := Label.new()
-	title.text = "RPG Maker"
+	title.text = "RPG Creator"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.add_theme_font_size_override("font_size", DesignTokens.FONT_SIZE_HERO)
 	title.add_theme_color_override("font_color", DesignTokens.COLOR_TEXT_BRIGHT)
@@ -109,7 +109,10 @@ func _on_new_pressed() -> void:
 func _on_open_pressed() -> void:
 	var dialog := FileDialog.new()
 	dialog.file_mode = FileDialog.FILE_MODE_OPEN_FILE
-	dialog.filters = PackedStringArray(["*.rpgm ; RPG Maker Project"])
+	dialog.filters = PackedStringArray([
+		"*.rpgc ; RPG Creator Project",
+		"*.rpgm ; Legacy RPG Creator Project",
+	])
 	dialog.access = FileDialog.ACCESS_FILESYSTEM
 	dialog.file_selected.connect(func(path: String) -> void:
 		if ProjectState.load_from(path):

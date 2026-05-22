@@ -59,11 +59,11 @@ func _on_save_pressed() -> void:
 func _on_save_as_pressed() -> void:
 	var dialog := FileDialog.new()
 	dialog.file_mode = FileDialog.FILE_MODE_SAVE_FILE
-	dialog.filters = PackedStringArray(["*.rpgm ; RPG Maker Project"])
+	dialog.filters = PackedStringArray(["*.rpgc ; RPG Creator Project"])
 	dialog.access = FileDialog.ACCESS_FILESYSTEM
 	dialog.file_selected.connect(func(path: String) -> void:
-		if not path.ends_with(".rpgm"):
-			path += ".rpgm"
+		if not path.ends_with(".rpgc"):
+			path += ".rpgc"
 		ProjectState.save(path)
 		dialog.queue_free()
 	)

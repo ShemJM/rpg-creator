@@ -1,4 +1,4 @@
-# RPG Maker
+# RPG Creator
 
 A **Godot 4 in-engine RPG authoring tool** — build tile maps, place events, script dialogue and logic, and play-test without leaving Godot.
 

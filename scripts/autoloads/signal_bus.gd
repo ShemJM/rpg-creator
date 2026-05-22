@@ -1,5 +1,5 @@
 extends Node
-## Cross-system signal bus for the RPG Maker editor.
+## Cross-system signal bus for the RPG Creator editor.
 
 # --- Editor ---
 signal map_selected(map_index: int)
