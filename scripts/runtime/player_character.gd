@@ -1,12 +1,16 @@
 class_name PlayerCharacter
 extends CharacterBody2D
-## Simple player character for play-test mode. WASD movement, collides with walls.
+## Simple player character for play-test mode. WASD/arrow movement plus scripted control.
 
 const SPEED: float = 200.0
 const SIZE: float = 24.0
 
 ## The direction the player is currently facing (for event interaction).
 var facing_direction: Vector2i = Vector2i(0, 1)
+
+## When set by scripted control, overrides live input for one physics frame.
+var _scripted_dir: Vector2 = Vector2.ZERO
+var _use_scripted: bool = false
 
 
 func _ready() -> void:
@@ -25,16 +29,34 @@ func _ready() -> void:
 	add_child(col)
 
 
+## Called by ScenarioRunner / agents to move one tile-step programmatically.
+## direction must be one of: "left", "right", "up", "down"
+func scripted_move(direction: String) -> void:
+	match direction:
+		"left":  _scripted_dir = Vector2(-1,  0)
+		"right": _scripted_dir = Vector2( 1,  0)
+		"up":    _scripted_dir = Vector2( 0, -1)
+		"down":  _scripted_dir = Vector2( 0,  1)
+		_:       _scripted_dir = Vector2.ZERO
+	_use_scripted = true
+
+
 func _physics_process(_delta: float) -> void:
 	var input_dir := Vector2.ZERO
-	if Input.is_action_pressed("ui_left"):
-		input_dir.x -= 1
-	if Input.is_action_pressed("ui_right"):
-		input_dir.x += 1
-	if Input.is_action_pressed("ui_up"):
-		input_dir.y -= 1
-	if Input.is_action_pressed("ui_down"):
-		input_dir.y += 1
+
+	if _use_scripted:
+		input_dir = _scripted_dir
+		_use_scripted = false
+		_scripted_dir = Vector2.ZERO
+	else:
+		if Input.is_action_pressed("ui_left"):
+			input_dir.x -= 1
+		if Input.is_action_pressed("ui_right"):
+			input_dir.x += 1
+		if Input.is_action_pressed("ui_up"):
+			input_dir.y -= 1
+		if Input.is_action_pressed("ui_down"):
+			input_dir.y += 1
 
 	velocity = input_dir.normalized() * SPEED
 	if input_dir != Vector2.ZERO:

@@ -50,6 +50,88 @@ func get_tile_def(tile_id: int) -> TileDef:
 
 
 # ---------------------------------------------------------------------------
+# Authoring service API — for use by agents, MCP tools, and scenario scripts
+# ---------------------------------------------------------------------------
+
+## Find a map by its integer id.
+func get_map_by_id(map_id: int) -> MapData:
+	for map in maps:
+		if map.id == map_id:
+			return map
+	return null
+
+
+## Add a new map with explicit dimensions.
+func add_map_sized(map_name: String, width: int, height: int) -> MapData:
+	var map := MapData.new()
+	map.id = maps.size()
+	map.map_name = map_name
+	map.width = width
+	map.height = height
+	map.fill_ground_default()
+	maps.append(map)
+	current_map_index = maps.size() - 1
+	return map
+
+
+## Paint a single tile on a layer.  layer 0 = ground, 1 = surface.
+func paint_tile(map_id: int, layer: int, x: int, y: int, tile_id: int) -> bool:
+	var map := get_map_by_id(map_id)
+	if map == null:
+		return false
+	map.set_tile(layer, Vector2i(x, y), tile_id)
+	return true
+
+
+## Fill a rectangle on a layer with one tile id.
+func fill_rect(map_id: int, layer: int, x: int, y: int, w: int, h: int, tile_id: int) -> bool:
+	var map := get_map_by_id(map_id)
+	if map == null:
+		return false
+	for ty in range(y, y + h):
+		for tx in range(x, x + w):
+			map.set_tile(layer, Vector2i(tx, ty), tile_id)
+	return true
+
+
+## Place an event and return it.  Returns null if map not found.
+func place_event(map_id: int, x: int, y: int, event_name: String = "Event") -> EventData:
+	var map := get_map_by_id(map_id)
+	if map == null:
+		return null
+	return map.add_event(x, y, event_name)
+
+
+## Append a command to a specific event page.
+## Returns false if the event or page index is invalid.
+func append_command(map_id: int, event_id: int, page_index: int, cmd: EventCommand) -> bool:
+	var map := get_map_by_id(map_id)
+	if map == null:
+		return false
+	for ev in map.events:
+		if ev.id == event_id:
+			if page_index < 0 or page_index >= ev.pages.size():
+				return false
+			ev.pages[page_index].commands.append(cmd)
+			return true
+	return false
+
+
+## Return a lightweight summary of all maps for agent inspection.
+func list_maps() -> Array:
+	var result: Array = []
+	for map in maps:
+		result.append({
+			"id": map.id,
+			"name": map.map_name,
+			"width": map.width,
+			"height": map.height,
+			"event_count": map.events.size(),
+		})
+	return result
+
+
+# ---------------------------------------------------------------------------
 # Save / Load
 # ---------------------------------------------------------------------------
 

@@ -1,6 +1,7 @@
 class_name RuntimePlayer
 extends Node2D
 ## Play-test runtime. Builds a walkable map from ProjectState and spawns the player.
+## Also exposes a scripted API for use by ScenarioRunner and agents.
 
 const CELL_SIZE: int = 32
 
@@ -89,10 +90,11 @@ func _spawn_player(map: MapData) -> void:
 	_player.position = center
 	add_child(_player)
 
-	# Camera follows player.
-	var camera := Camera2D.new()
-	camera.make_current()
-	_player.add_child(camera)
+	# Camera follows player — skip in headless mode (no viewport).
+	if DisplayServer.get_name() != "headless":
+		var camera := Camera2D.new()
+		camera.make_current()
+		_player.add_child(camera)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -115,7 +117,88 @@ func _physics_process(_delta: float) -> void:
 		return
 	print("[RT] Player moved to grid: ", player_grid)
 	_last_player_grid = player_grid
+	SignalBus.trace_player_moved.emit(player_grid, _current_map.id if _current_map else -1)
 	_check_touch_events(player_grid)
+
+
+# ---------------------------------------------------------------------------
+# Scripted / Agent API
+# ---------------------------------------------------------------------------
+
+## Move the player one tile-step in the given direction.
+## In scripted mode this teleports directly to the adjacent cell so callers
+## don't have to wait multiple physics frames for the velocity to resolve.
+## direction: "left" | "right" | "up" | "down"
+func scripted_move(direction: String) -> void:
+	if _player == null or _event_running or _current_map == null:
+		return
+	var current_grid := Vector2i(
+		int(_player.position.x) / CELL_SIZE,
+		int(_player.position.y) / CELL_SIZE
+	)
+	var dir_vec: Vector2i
+	match direction:
+		"left":  dir_vec = Vector2i(-1,  0)
+		"right": dir_vec = Vector2i( 1,  0)
+		"up":    dir_vec = Vector2i( 0, -1)
+		"down":  dir_vec = Vector2i( 0,  1)
+		_:       return
+	var target := current_grid + dir_vec
+	# Bounds check.
+	if target.x < 0 or target.x >= _current_map.width or \
+	   target.y < 0 or target.y >= _current_map.height:
+		return
+	# Update facing direction.
+	(_player as PlayerCharacter).facing_direction = dir_vec
+	# Teleport directly to target cell (top-left corner; grid calc uses int/CELL_SIZE).
+	_player.position = Vector2(target) * CELL_SIZE + Vector2(CELL_SIZE / 2.0, CELL_SIZE / 2.0)
+	# Emit trace immediately and sync _last_player_grid so _physics_process
+	# doesn't double-report the same position on the next frame.
+	_last_player_grid = target
+	SignalBus.trace_player_moved.emit(target, _current_map.id)
+
+
+## Trigger the interact action programmatically (same as pressing ui_accept).
+func scripted_interact() -> void:
+	if not _event_running:
+		_try_interact()
+
+
+## Advance a waiting dialogue programmatically.
+func scripted_advance_dialogue() -> void:
+	SignalBus.scripted_dialogue_advance.emit()
+
+
+## Make a choice programmatically (0-based index).
+func scripted_make_choice(index: int) -> void:
+	SignalBus.scripted_choice_made.emit(index)
+
+
+## Return a snapshot of the current runtime state as a Dictionary.
+## This is the structured output agents and tests should read.
+func get_snapshot() -> Dictionary:
+	var player_grid := Vector2i(-1, -1)
+	if _player:
+		player_grid = Vector2i(
+			int(_player.position.x) / CELL_SIZE,
+			int(_player.position.y) / CELL_SIZE
+		)
+	var switches: Array = []
+	for i in range(GameState.switches.size()):
+		if GameState.switches[i]:
+			switches.append(i)
+	var variables: Dictionary = {}
+	for i in range(GameState.variables.size()):
+		if GameState.variables[i] != 0:
+			variables[str(i)] = GameState.variables[i]
+	return {
+		"map_id": _current_map.id if _current_map else -1,
+		"map_name": _current_map.map_name if _current_map else "",
+		"player_grid": { "x": player_grid.x, "y": player_grid.y },
+		"event_running": _event_running,
+		"switches_on": switches,
+		"variables": variables,
+	}
 
 
 func _try_interact() -> void:
