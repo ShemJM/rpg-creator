@@ -156,6 +156,8 @@ func scripted_move(direction: String) -> void:
 	# doesn't double-report the same position on the next frame.
 	_last_player_grid = target
 	SignalBus.trace_player_moved.emit(target, _current_map.id)
+	# Fire PLAYER_TOUCH events (same behaviour as walking manually).
+	_check_touch_events(target)
 
 
 ## Trigger the interact action programmatically (same as pressing ui_accept).
@@ -271,6 +273,8 @@ func _on_transfer(map_id: int, x: int, y: int) -> void:
 	_build_map(_current_map)
 	_spawn_player(_current_map)
 	_player.position = Vector2(x, y) * CELL_SIZE + Vector2(CELL_SIZE / 2.0, CELL_SIZE / 2.0)
+	# Sync so _physics_process doesn't re-fire _check_touch_events on the arrival tile.
+	_last_player_grid = Vector2i(x, y)
 	_check_autorun_events()
 
 

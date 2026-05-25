@@ -1,0 +1,319 @@
+{
+	"maps": [
+		{
+			"events": [
+				{
+					"event_name": "Elder",
+					"id": 0,
+					"pages": [
+						{
+							"commands": [
+								{
+									"params": {
+										"lines": [
+											"A dark crystal was stolen by goblins!",
+											"They hide in the cave to the east.",
+											"Please, brave adventurer — help us!"
+										],
+										"name": "Elder"
+									},
+									"type": 0
+								}
+							],
+							"condition_self_switch": "",
+							"condition_switch_id": -1,
+							"condition_switch_value": true,
+							"condition_variable_gte": 0,
+							"condition_variable_id": -1,
+							"graphic_color": [
+								0.200000002980232,
+								0.600000023841858,
+								0.899999976158142,
+								1.0
+							],
+							"trigger": 0
+						},
+						{
+							"commands": [
+								{
+									"params": {
+										"lines": [
+											"Thank you, adventurer!",
+											"You have saved Thornvale!"
+										],
+										"name": "Elder"
+									},
+									"type": 0
+								}
+							],
+							"condition_self_switch": "",
+							"condition_switch_id": 0,
+							"condition_switch_value": true,
+							"condition_variable_gte": 0,
+							"condition_variable_id": -1,
+							"graphic_color": [
+								0.200000002980232,
+								0.600000023841858,
+								0.899999976158142,
+								1.0
+							],
+							"trigger": 0
+						}
+					],
+					"x": 4,
+					"y": 4
+				},
+				{
+					"event_name": "Chest",
+					"id": 1,
+					"pages": [
+						{
+							"commands": [
+								{
+									"params": {
+										"lines": [
+											"You found a RUSTY SWORD!",
+											"+5 Attack Power"
+										],
+										"name": ""
+									},
+									"type": 0
+								},
+								{
+									"params": {
+										"letter": "A",
+										"value": true
+									},
+									"type": 6
+								}
+							],
+							"condition_self_switch": "",
+							"condition_switch_id": -1,
+							"condition_switch_value": true,
+							"condition_variable_gte": 0,
+							"condition_variable_id": -1,
+							"graphic_color": [
+								0.899999976158142,
+								0.699999988079071,
+								0.100000001490116,
+								1.0
+							],
+							"trigger": 0
+						},
+						{
+							"commands": [
+								{
+									"params": {
+										"lines": [
+											"The chest is empty."
+										],
+										"name": ""
+									},
+									"type": 0
+								}
+							],
+							"condition_self_switch": "A",
+							"condition_switch_id": -1,
+							"condition_switch_value": true,
+							"condition_variable_gte": 0,
+							"condition_variable_id": -1,
+							"graphic_color": [
+								0.5,
+								0.400000005960464,
+								0.100000001490116,
+								1.0
+							],
+							"trigger": 0
+						}
+					],
+					"x": 9,
+					"y": 5
+				},
+				{
+					"event_name": "Cave Entrance",
+					"id": 2,
+					"pages": [
+						{
+							"commands": [
+								{
+									"params": {
+										"map_id": 1.0,
+										"x": 1.0,
+										"y": 6.0
+									},
+									"type": 5
+								}
+							],
+							"condition_self_switch": "",
+							"condition_switch_id": -1,
+							"condition_switch_value": true,
+							"condition_variable_gte": 0,
+							"condition_variable_id": -1,
+							"graphic_color": [
+								0.150000005960464,
+								0.100000001490116,
+								0.100000001490116,
+								1.0
+							],
+							"trigger": 1
+						}
+					],
+					"x": 14,
+					"y": 6
+				}
+			],
+			"ground_layer": {
+				"14,6": 0
+			},
+			"height": 12,
+			"id": 0,
+			"map_name": "Thornvale",
+			"surface_layer": {
+
+			},
+			"width": 15
+		},
+		{
+			"events": [
+				{
+					"event_name": "Goblin Boss",
+					"id": 0,
+					"pages": [
+						{
+							"commands": [
+								{
+									"params": {
+										"lines": [
+											"Grr! You dare enter MY cave?!",
+											"The crystal belongs to us now!"
+										],
+										"name": "Goblin Boss"
+									},
+									"type": 0
+								},
+								{
+									"params": {
+										"lines": [
+											"...After a fierce battle...",
+											"The goblin is defeated!"
+										],
+										"name": ""
+									},
+									"type": 0
+								},
+								{
+									"params": {
+										"lines": [
+											"You recovered the Lost Crystal!",
+											"Return it to the Elder in Thornvale."
+										],
+										"name": ""
+									},
+									"type": 0
+								},
+								{
+									"params": {
+										"ids": [
+											0.0
+										],
+										"value": true
+									},
+									"type": 2
+								},
+								{
+									"params": {
+										"letter": "A",
+										"value": true
+									},
+									"type": 6
+								}
+							],
+							"condition_self_switch": "",
+							"condition_switch_id": -1,
+							"condition_switch_value": true,
+							"condition_variable_gte": 0,
+							"condition_variable_id": -1,
+							"graphic_color": [
+								0.800000011920929,
+								0.100000001490116,
+								0.100000001490116,
+								1.0
+							],
+							"trigger": 0
+						},
+						{
+							"commands": [
+								{
+									"params": {
+										"lines": [
+											"The goblin lies defeated."
+										],
+										"name": ""
+									},
+									"type": 0
+								}
+							],
+							"condition_self_switch": "A",
+							"condition_switch_id": -1,
+							"condition_switch_value": true,
+							"condition_variable_gte": 0,
+							"condition_variable_id": -1,
+							"graphic_color": [
+								0.400000005960464,
+								0.400000005960464,
+								0.400000005960464,
+								1.0
+							],
+							"trigger": 0
+						}
+					],
+					"x": 5,
+					"y": 4
+				},
+				{
+					"event_name": "Cave Exit",
+					"id": 1,
+					"pages": [
+						{
+							"commands": [
+								{
+									"params": {
+										"map_id": 0.0,
+										"x": 13.0,
+										"y": 6.0
+									},
+									"type": 5
+								}
+							],
+							"condition_self_switch": "",
+							"condition_switch_id": -1,
+							"condition_switch_value": true,
+							"condition_variable_gte": 0,
+							"condition_variable_id": -1,
+							"graphic_color": [
+								0.150000005960464,
+								0.100000001490116,
+								0.100000001490116,
+								1.0
+							],
+							"trigger": 1
+						}
+					],
+					"x": 0,
+					"y": 6
+				}
+			],
+			"ground_layer": {
+
+			},
+			"height": 12,
+			"id": 1,
+			"map_name": "Goblin Cave",
+			"surface_layer": {
+
+			},
+			"width": 10
+		}
+	],
+	"version": 1
+}

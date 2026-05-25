@@ -1,0 +1,45 @@
+{
+	"project": "games/lost_crystal.rpgm",
+	"map_id": 0,
+	"steps": [
+		{ "action": "snapshot" },
+		{ "action": "expect_position", "x": 7, "y": 6 },
+
+		{ "action": "move", "direction": "left",  "times": 3 },
+		{ "action": "move", "direction": "up",    "times": 2 },
+		{ "action": "interact" },
+		{ "action": "advance_dialogue" },
+		{ "action": "expect_position", "x": 4, "y": 4 },
+
+		{ "action": "move", "direction": "right", "times": 5 },
+		{ "action": "move", "direction": "down",  "times": 1 },
+		{ "action": "interact" },
+		{ "action": "advance_dialogue" },
+
+		{ "action": "move", "direction": "right", "times": 5 },
+		{ "action": "move", "direction": "down",  "times": 1 },
+
+		{ "action": "expect_position", "x": 1, "y": 6 },
+		{ "action": "snapshot" },
+
+		{ "action": "move", "direction": "right", "times": 4 },
+		{ "action": "move", "direction": "up",    "times": 2 },
+		{ "action": "interact" },
+		{ "action": "advance_dialogue" },
+		{ "action": "advance_dialogue" },
+		{ "action": "advance_dialogue" },
+		{ "action": "expect_switch", "id": 0, "value": true },
+
+		{ "action": "move", "direction": "left",  "times": 5 },
+		{ "action": "move", "direction": "down",  "times": 2 },
+
+		{ "action": "expect_position", "x": 13, "y": 6 },
+		{ "action": "snapshot" },
+
+		{ "action": "move", "direction": "left",  "times": 9 },
+		{ "action": "move", "direction": "up",    "times": 2 },
+		{ "action": "interact" },
+		{ "action": "advance_dialogue" },
+		{ "action": "snapshot" }
+	]
+}
