@@ -14,6 +14,7 @@ var _last_player_grid: Vector2i = Vector2i(-1, -1)
 
 func _ready() -> void:
 	GameState.reset()
+	_reset_all_event_self_switches()
 	_current_map = ProjectState.get_current_map()
 	if _current_map == null:
 		SignalBus.playtest_stopped.emit()
@@ -176,14 +177,28 @@ func _check_touch_events(player_grid: Vector2i) -> void:
 
 
 func _on_transfer(map_id: int, x: int, y: int) -> void:
-	if map_id < 0 or map_id >= ProjectState.maps.size():
+	var target_map := _find_map_by_id(map_id)
+	if target_map == null:
 		return
 	# Clear current map visuals.
 	for child in get_children():
 		if child != _event_runner and child != _dialogue_box:
 			child.queue_free()
-	_current_map = ProjectState.maps[map_id]
+	_current_map = target_map
 	_build_map(_current_map)
 	_spawn_player(_current_map)
 	_player.position = Vector2(x, y) * CELL_SIZE + Vector2(CELL_SIZE / 2.0, CELL_SIZE / 2.0)
 	_check_autorun_events()
+
+
+func _reset_all_event_self_switches() -> void:
+	for map: MapData in ProjectState.maps:
+		for ev: EventData in map.events:
+			ev.self_switches = { "A": false, "B": false, "C": false, "D": false }
+
+
+func _find_map_by_id(map_id: int) -> MapData:
+	for map: MapData in ProjectState.maps:
+		if map.id == map_id:
+			return map
+	return null

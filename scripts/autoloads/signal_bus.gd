@@ -22,7 +22,7 @@ signal project_saved(path: String)
 
 # --- Events (runtime) ---
 signal dialogue_requested(text: String, speaker: String)
-signal choices_requested(choices: Array)
+signal choices_requested(choices: Array, cancel_index: int)
 signal choice_made(index: int)
 signal dialogue_finished()
 signal transfer_requested(map_id: int, x: int, y: int)

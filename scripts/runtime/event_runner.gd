@@ -75,9 +75,10 @@ func _cmd_show_text(params: Dictionary) -> void:
 
 func _cmd_show_choices(params: Dictionary) -> void:
 	var choices: Array = params.get("choices", [])
+	var cancel_index: int = int(params.get("cancel_index", -1))
 	print("[ER] show_choices: ", choices)
 	_waiting = true
-	SignalBus.choices_requested.emit(choices)
+	SignalBus.choices_requested.emit(choices, cancel_index)
 	SignalBus.choice_made.connect(_on_choice_made, CONNECT_ONE_SHOT)
 
 

@@ -470,7 +470,7 @@ func _build_conditional_branch_edit_ui(container: VBoxContainer, cmd: EventComma
 	switch_check.text = "Expected ON"
 	switch_check.button_pressed = bool(cmd.params.get("value", true))
 	switch_check.toggled.connect(func(v: bool):
-		if str(cmd.params.get("condition_type", "switch")) == "switch":
+		if condition_types[type_option.selected] == "switch":
 			cmd.params["value"] = v
 	)
 	switch_box.add_child(switch_check)
@@ -485,7 +485,7 @@ func _build_conditional_branch_edit_ui(container: VBoxContainer, cmd: EventComma
 	variable_spin.max_value = 9999
 	variable_spin.value = int(cmd.params.get("value", 0))
 	variable_spin.value_changed.connect(func(v: float):
-		if str(cmd.params.get("condition_type", "switch")) == "variable_gte":
+		if condition_types[type_option.selected] == "variable_gte":
 			cmd.params["value"] = int(v)
 	)
 	variable_box.add_child(variable_spin)
@@ -503,7 +503,7 @@ func _build_conditional_branch_edit_ui(container: VBoxContainer, cmd: EventComma
 	var branch_letter_index: int = maxi(branch_letters.find(branch_letter), 0)
 	self_switch_option.select(branch_letter_index)
 	self_switch_option.item_selected.connect(func(idx: int):
-		if str(cmd.params.get("condition_type", "switch")) == "self_switch":
+		if condition_types[type_option.selected] == "self_switch":
 			cmd.params["value"] = branch_letters[idx]
 	)
 	self_switch_box.add_child(self_switch_option)

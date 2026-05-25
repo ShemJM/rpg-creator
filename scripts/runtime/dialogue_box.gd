@@ -8,6 +8,7 @@ var _name_label: Label
 var _panel: PanelContainer
 var _choices_container: VBoxContainer
 var _is_showing: bool = false
+var _choice_cancel_index: int = -1
 
 
 func _ready() -> void:
@@ -93,9 +94,10 @@ func _on_dialogue_requested(text: String, speaker: String) -> void:
 	print("[DB] panel visible=", _panel.visible, " is_showing=", _is_showing)
 
 
-func _on_choices_requested(choices: Array) -> void:
+func _on_choices_requested(choices: Array, cancel_index: int) -> void:
 	print("[DB] choices_requested received: ", choices)
 	_clear_choices()
+	_choice_cancel_index = cancel_index
 	_name_label.text = ""
 	_name_label.visible = false
 	_text_label.text = ""
@@ -118,7 +120,11 @@ func _unhandled_input(event: InputEvent) -> void:
 	if not _is_showing:
 		return
 	if _choices_container.get_child_count() > 0:
-		return  # Waiting for choice selection, not key press.
+		if event.is_action_pressed("ui_cancel") and _choice_cancel_index >= 0:
+			_close_dialogue()
+			SignalBus.choice_made.emit(_choice_cancel_index)
+			get_viewport().set_input_as_handled()
+		return
 	if event.is_action_pressed("ui_accept"):
 		_close_dialogue()
 		SignalBus.dialogue_finished.emit()
@@ -131,6 +137,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _close_dialogue() -> void:
 	_clear_choices()
+	_choice_cancel_index = -1
 	_panel.hide()
 	_is_showing = false
 
