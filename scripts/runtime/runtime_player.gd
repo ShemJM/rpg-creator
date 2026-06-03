@@ -64,12 +64,23 @@ func _place_tile(coords: Vector2i, tile_id: int) -> void:
 
 	var world_pos := Vector2(coords) * CELL_SIZE
 
-	# Visual: ColorRect as a child of a Node2D at the position.
-	var tile_visual := ColorRect.new()
-	tile_visual.color = tile_def.color
-	tile_visual.size = Vector2(CELL_SIZE, CELL_SIZE)
-	tile_visual.position = world_pos
-	add_child(tile_visual)
+	var tex := ProjectState.get_tile_texture(tile_def)
+	if tex:
+		var sprite := Sprite2D.new()
+		sprite.texture = tex
+		var src := Rect2(tile_def.region) if tile_def.region.size != Vector2i.ZERO \
+				else Rect2(Vector2.ZERO, Vector2(tex.get_width(), tex.get_height()))
+		sprite.region_enabled = true
+		sprite.region_rect = src
+		sprite.position = world_pos + Vector2(CELL_SIZE / 2.0, CELL_SIZE / 2.0)
+		sprite.scale = Vector2(CELL_SIZE, CELL_SIZE) / src.size
+		add_child(sprite)
+	else:
+		var tile_visual := ColorRect.new()
+		tile_visual.color = tile_def.color
+		tile_visual.size = Vector2(CELL_SIZE, CELL_SIZE)
+		tile_visual.position = world_pos
+		add_child(tile_visual)
 
 	# Collision for impassable tiles.
 	if not tile_def.passable:

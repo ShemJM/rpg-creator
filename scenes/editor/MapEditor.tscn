@@ -186,3 +186,7 @@ text = "Tiles:"
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 6
+
+[node name="ImportTilesetBtn" type="Button" parent="VSplit/Bottom/HBox"]
+layout_mode = 2
+text = "Import Tileset..."

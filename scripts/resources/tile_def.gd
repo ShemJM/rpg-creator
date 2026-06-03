@@ -5,6 +5,10 @@ extends Resource
 @export var tile_name: String = ""
 @export var color: Color = Color.WHITE
 @export var passable: bool = true
+## Absolute path to the source image; empty = colour-only tile.
+@export var source_path: String = ""
+## Pixel region within source_path; zero rect = whole image.
+@export var region: Rect2i = Rect2i(0, 0, 0, 0)
 
 
 static func get_stub_tileset() -> Array[TileDef]:

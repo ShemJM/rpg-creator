@@ -34,16 +34,14 @@ func _draw() -> void:
 		var tile_id: int = map.ground_layer[coords]
 		var tile_def := ProjectState.get_tile_def(tile_id)
 		if tile_def:
-			var rect := Rect2(Vector2(coords) * CELL_SIZE, Vector2(CELL_SIZE, CELL_SIZE))
-			draw_rect(rect, tile_def.color)
+			_draw_tile(tile_def, Vector2(coords) * CELL_SIZE)
 
 	# Draw surface layer on top.
 	for coords: Vector2i in map.surface_layer:
 		var tile_id: int = map.surface_layer[coords]
 		var tile_def := ProjectState.get_tile_def(tile_id)
 		if tile_def:
-			var rect := Rect2(Vector2(coords) * CELL_SIZE, Vector2(CELL_SIZE, CELL_SIZE))
-			draw_rect(rect, tile_def.color)
+			_draw_tile(tile_def, Vector2(coords) * CELL_SIZE)
 
 	# Draw grid lines.
 	var grid_color := Color(0.0, 0.0, 0.0, 0.15)
@@ -131,3 +129,13 @@ func _is_in_bounds(coords: Vector2i) -> bool:
 	if map == null:
 		return false
 	return coords.x >= 0 and coords.x < map.width and coords.y >= 0 and coords.y < map.height
+
+
+func _draw_tile(tile_def: TileDef, world_pos: Vector2) -> void:
+	var dest := Rect2(world_pos, Vector2(CELL_SIZE, CELL_SIZE))
+	var tex := ProjectState.get_tile_texture(tile_def)
+	if tex:
+		var src := Rect2(tile_def.region) if tile_def.region.size != Vector2i.ZERO else Rect2(Vector2.ZERO, Vector2(tex.get_width(), tex.get_height()))
+		draw_texture_rect_region(tex, dest, src)
+	else:
+		draw_rect(dest, tile_def.color)
