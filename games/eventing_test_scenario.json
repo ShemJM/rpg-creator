@@ -1,0 +1,94 @@
+{
+	"project": "games/eventing_test.rpgm",
+	"start_map_id": 0,
+	"steps": [
+		{
+			"action": "wait_frames",
+			"count": 5
+		},
+		{
+			"action": "move",
+			"direction": "right",
+			"times": 1
+		},
+		{
+			"action": "interact"
+		},
+		{
+			"action": "wait_frames",
+			"count": 40
+		},
+		{
+			"action": "expect_variable",
+			"id": 1,
+			"value": 3
+		},
+		{
+			"action": "expect_switch",
+			"id": 2,
+			"value": true
+		},
+		{
+			"action": "move",
+			"direction": "down",
+			"times": 1
+		},
+		{
+			"action": "interact"
+		},
+		{
+			"action": "wait_frames",
+			"count": 20
+		},
+		{
+			"action": "expect_switch",
+			"id": 3,
+			"value": true
+		},
+		{
+			"action": "move",
+			"direction": "down",
+			"times": 1
+		},
+		{
+			"action": "interact"
+		},
+		{
+			"action": "wait_frames",
+			"count": 80
+		},
+		{
+			"action": "expect_switch",
+			"id": 4,
+			"value": true
+		},
+		{
+			"action": "expect_position",
+			"map_id": 0,
+			"x": 11,
+			"y": 8
+		},
+		{
+			"action": "interact"
+		},
+		{
+			"action": "wait_frames",
+			"count": 60
+		},
+		{
+			"action": "expect_switch",
+			"id": 6,
+			"value": true
+		},
+		{
+			"action": "expect_switch",
+			"id": 5,
+			"value": false
+		},
+		{
+			"action": "expect_variable",
+			"id": 2,
+			"value": 1
+		}
+	]
+}

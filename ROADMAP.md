@@ -37,22 +37,22 @@ The most critical gap. Nothing else matters until project data survives a sessio
 
 Commands that round out the scripting system:
 
-- [ ] `MOVE_ROUTE` — move an event or the player along a path
+- [x] `MOVE_ROUTE` — move an event or the player along a path
 - [ ] `SHOW_PICTURE` / `ERASE_PICTURE` — overlay images on screen
 - [ ] `CHANGE_TRANSPARENT` — hide/show the player sprite
 - [ ] `PLAY_BGM` / `STOP_BGM` — background music
 - [ ] `PLAY_SE` (implement) — sound effect playback
-- [ ] `FADE_OUT` / `FADE_IN` (implement) — actual screen colour fade
-- [ ] `GAME_OVER` — return to title
-- [ ] `LABEL` / `JUMP_TO_LABEL` — loop and goto within a command list
+- [x] `FADE_OUT` / `FADE_IN` (implement) — actual screen colour fade
+- [x] `GAME_OVER` — return to title
+- [x] `LABEL` / `JUMP_TO_LABEL` — loop and goto within a command list
 
 ---
 
-## Phase 5 — Parallel Events & Event Lifecycle
+## Phase 5 — Parallel Events & Event Lifecycle ✓
 
-- [ ] Parallel trigger: run event every frame without blocking the player
-- [ ] Event pages re-evaluate conditions when switches/variables change
-- [ ] `erased` state: event can be permanently removed from the map
+- [x] Parallel trigger: run event every frame without blocking the player
+- [x] Event pages re-evaluate conditions when switches/variables change
+- [x] `erased` state: event can be permanently removed from the map
 
 ---
 

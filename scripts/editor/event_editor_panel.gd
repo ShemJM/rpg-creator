@@ -54,6 +54,13 @@ func _populate_command_option(option: OptionButton) -> void:
 	option.add_item("Transfer Player", EventCommand.Type.TRANSFER_PLAYER)
 	option.add_item("Set Self Switch", EventCommand.Type.SET_SELF_SWITCH)
 	option.add_item("Wait", EventCommand.Type.WAIT)
+	option.add_item("Fade Out", EventCommand.Type.FADE_OUT)
+	option.add_item("Fade In", EventCommand.Type.FADE_IN)
+	option.add_item("Move Route", EventCommand.Type.MOVE_ROUTE)
+	option.add_item("Label", EventCommand.Type.LABEL)
+	option.add_item("Jump to Label", EventCommand.Type.JUMP_TO_LABEL)
+	option.add_item("Erase Event", EventCommand.Type.ERASE_EVENT)
+	option.add_item("Game Over", EventCommand.Type.GAME_OVER)
 
 
 func _build_self_switch_options() -> void:
@@ -169,6 +176,21 @@ func _command_summary(cmd: EventCommand) -> String:
 			return "Self Switch %s = %s" % [cmd.params.get("letter", "A"), str(cmd.params.get("value", true))]
 		EventCommand.Type.WAIT:
 			return "Wait %d frames" % cmd.params.get("frames", 60)
+		EventCommand.Type.FADE_OUT:
+			return "Fade Out (%.1fs)" % cmd.params.get("duration", 0.5)
+		EventCommand.Type.FADE_IN:
+			return "Fade In (%.1fs)" % cmd.params.get("duration", 0.5)
+		EventCommand.Type.MOVE_ROUTE:
+			var steps: Array = cmd.params.get("steps", [])
+			return "Move %s: %s" % [cmd.params.get("target", "player"), str(steps)]
+		EventCommand.Type.LABEL:
+			return "Label: %s" % cmd.params.get("name", "")
+		EventCommand.Type.JUMP_TO_LABEL:
+			return "Jump to Label: %s" % cmd.params.get("name", "")
+		EventCommand.Type.ERASE_EVENT:
+			return "Erase Event"
+		EventCommand.Type.GAME_OVER:
+			return "Game Over"
 		_:
 			return "Unknown"
 
@@ -241,6 +263,20 @@ func _create_default_command(cmd_type: int) -> EventCommand:
 			return EventCommand.make_set_self_switch("A", true)
 		EventCommand.Type.WAIT:
 			return EventCommand.make_wait(60)
+		EventCommand.Type.FADE_OUT:
+			return EventCommand.make_fade_out()
+		EventCommand.Type.FADE_IN:
+			return EventCommand.make_fade_in()
+		EventCommand.Type.MOVE_ROUTE:
+			return EventCommand.make_move_route("player", ["down"])
+		EventCommand.Type.LABEL:
+			return EventCommand.make_label("start")
+		EventCommand.Type.JUMP_TO_LABEL:
+			return EventCommand.make_jump_to_label("start")
+		EventCommand.Type.ERASE_EVENT:
+			return EventCommand.make_erase_event()
+		EventCommand.Type.GAME_OVER:
+			return EventCommand.make_game_over()
 		_:
 			return EventCommand.make_wait(60)
 
@@ -296,6 +332,20 @@ func _open_command_edit_popup(cmd: EventCommand, on_close: Callable) -> void:
 			_build_self_switch_edit_ui(vbox, cmd)
 		EventCommand.Type.WAIT:
 			_build_wait_edit_ui(vbox, cmd)
+		EventCommand.Type.FADE_OUT, EventCommand.Type.FADE_IN:
+			_build_fade_edit_ui(vbox, cmd)
+		EventCommand.Type.MOVE_ROUTE:
+			_build_move_route_edit_ui(vbox, cmd)
+		EventCommand.Type.LABEL, EventCommand.Type.JUMP_TO_LABEL:
+			_build_label_edit_ui(vbox, cmd)
+		EventCommand.Type.ERASE_EVENT:
+			var erase_lbl := Label.new()
+			erase_lbl.text = "Erases this event for the rest of the play-test.\nNo parameters."
+			vbox.add_child(erase_lbl)
+		EventCommand.Type.GAME_OVER:
+			var go_lbl := Label.new()
+			go_lbl.text = "Ends the play-test immediately.\nNo parameters."
+			vbox.add_child(go_lbl)
 		_:
 			var lbl := Label.new()
 			lbl.text = "Edit not yet implemented for this type."
@@ -656,3 +706,66 @@ func _build_wait_edit_ui(container: VBoxContainer, cmd: EventCommand) -> void:
 	spin.value = cmd.params.get("frames", 60)
 	spin.value_changed.connect(func(v: float): cmd.params["frames"] = int(v))
 	container.add_child(spin)
+
+
+func _build_fade_edit_ui(container: VBoxContainer, cmd: EventCommand) -> void:
+	var lbl := Label.new()
+	lbl.text = "Duration (seconds):"
+	container.add_child(lbl)
+	var spin := SpinBox.new()
+	spin.min_value = 0.1
+	spin.max_value = 10.0
+	spin.step = 0.1
+	spin.value = cmd.params.get("duration", 0.5)
+	spin.value_changed.connect(func(v: float): cmd.params["duration"] = v)
+	container.add_child(spin)
+
+
+func _build_label_edit_ui(container: VBoxContainer, cmd: EventCommand) -> void:
+	var lbl := Label.new()
+	lbl.text = "Label Name:"
+	container.add_child(lbl)
+	var name_edit := LineEdit.new()
+	name_edit.text = cmd.params.get("name", "")
+	name_edit.text_changed.connect(func(t: String): cmd.params["name"] = t)
+	container.add_child(name_edit)
+
+
+func _build_move_route_edit_ui(container: VBoxContainer, cmd: EventCommand) -> void:
+	var target_lbl := Label.new()
+	target_lbl.text = "Target:"
+	container.add_child(target_lbl)
+	var targets: Array[String] = ["player", "this"]
+	var target_option := OptionButton.new()
+	target_option.add_item("Player", 0)
+	target_option.add_item("This Event", 1)
+	var current_target: String = str(cmd.params.get("target", "player"))
+	target_option.select(maxi(targets.find(current_target), 0))
+	target_option.item_selected.connect(func(idx: int): cmd.params["target"] = targets[idx])
+	container.add_child(target_option)
+
+	var steps_lbl := Label.new()
+	steps_lbl.text = "Steps (one per line: up / down / left / right / wait):"
+	container.add_child(steps_lbl)
+	var steps_edit := TextEdit.new()
+	steps_edit.custom_minimum_size = Vector2(0, 120)
+	var steps: Array = cmd.params.get("steps", [])
+	var step_strings: Array[String] = []
+	for s in steps:
+		step_strings.append(str(s))
+	steps_edit.text = "\n".join(step_strings)
+	steps_edit.text_changed.connect(func():
+		var parsed: Array = []
+		for line in steps_edit.text.split("\n"):
+			var trimmed: String = line.strip_edges()
+			if not trimmed.is_empty():
+				parsed.append(trimmed)
+		cmd.params["steps"] = parsed
+	)
+	container.add_child(steps_edit)
+
+	var wait_check := CheckBox.new()
+	wait_check.text = "Wait for completion"
+	wait_check.button_pressed = cmd.params.get("wait_for_completion", true)
+	wait_check.toggled.connect(func(v: bool): cmd.params["wait_for_completion"] = v)
+	container.add_child(wait_check)

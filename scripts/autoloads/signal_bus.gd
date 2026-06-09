@@ -26,6 +26,14 @@ signal choices_requested(choices: Array, cancel_index: int)
 signal choice_made(index: int)
 signal dialogue_finished()
 signal transfer_requested(map_id: int, x: int, y: int)
+## direction: "out" fades to black, "in" fades back to the scene.
+signal fade_requested(direction: String, duration: float)
+signal fade_finished()
+## target: "player" or "event" (event_id identifies the event to move).
+signal move_route_requested(event_id: int, target: String, steps: Array)
+signal move_route_finished()
+signal game_over_requested()
+signal event_erased(event_id: int)
 
 # --- Agent / scripted control ---
 ## Emit to advance a waiting dialogue without keyboard input.
@@ -39,6 +47,8 @@ signal trace_event_finished(event_name: String, event_id: int)
 signal trace_command_executed(event_id: int, command_type: String, params: Dictionary)
 signal trace_switch_changed(id: int, value: bool)
 signal trace_variable_changed(id: int, value: int)
+signal trace_self_switch_changed(event_id: int, letter: String, value: bool)
+signal trace_game_over()
 signal trace_transfer(from_map_id: int, to_map_id: int, x: int, y: int)
 signal trace_dialogue(speaker: String, text: String)
 signal trace_choice_made(index: int, label: String)

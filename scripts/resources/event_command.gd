@@ -14,6 +14,11 @@ enum Type {
 	PLAY_SE,
 	FADE_OUT,
 	FADE_IN,
+	ERASE_EVENT,
+	LABEL,
+	JUMP_TO_LABEL,
+	GAME_OVER,
+	MOVE_ROUTE,
 }
 
 @export var type: Type = Type.SHOW_TEXT
@@ -28,8 +33,14 @@ enum Type {
 ## SET_SELF_SWITCH: { "letter": "A", "value": true }
 ## WAIT: { "frames": 60 }
 ## PLAY_SE: { "track": "", "volume": 100 }
-## FADE_OUT: { "speed": 1.0 }
-## FADE_IN: { "speed": 1.0 }
+## FADE_OUT: { "duration": 0.5 }  (seconds)
+## FADE_IN: { "duration": 0.5 }   (seconds)
+## ERASE_EVENT: {}  — hides this event for the rest of the play-test
+## LABEL: { "name": "start" }
+## JUMP_TO_LABEL: { "name": "start" }
+## GAME_OVER: {}
+## MOVE_ROUTE: { "target": "player" | "this", "steps": ["up","down","left","right","wait"],
+##               "wait_for_completion": true }
 @export var params: Dictionary = {}
 
 
@@ -92,4 +103,53 @@ static func make_wait(frames: int) -> EventCommand:
 	var cmd := EventCommand.new()
 	cmd.type = Type.WAIT
 	cmd.params = { "frames": frames }
+	return cmd
+
+
+static func make_fade_out(duration: float = 0.5) -> EventCommand:
+	var cmd := EventCommand.new()
+	cmd.type = Type.FADE_OUT
+	cmd.params = { "duration": duration }
+	return cmd
+
+
+static func make_fade_in(duration: float = 0.5) -> EventCommand:
+	var cmd := EventCommand.new()
+	cmd.type = Type.FADE_IN
+	cmd.params = { "duration": duration }
+	return cmd
+
+
+static func make_erase_event() -> EventCommand:
+	var cmd := EventCommand.new()
+	cmd.type = Type.ERASE_EVENT
+	cmd.params = {}
+	return cmd
+
+
+static func make_label(label_name: String) -> EventCommand:
+	var cmd := EventCommand.new()
+	cmd.type = Type.LABEL
+	cmd.params = { "name": label_name }
+	return cmd
+
+
+static func make_jump_to_label(label_name: String) -> EventCommand:
+	var cmd := EventCommand.new()
+	cmd.type = Type.JUMP_TO_LABEL
+	cmd.params = { "name": label_name }
+	return cmd
+
+
+static func make_game_over() -> EventCommand:
+	var cmd := EventCommand.new()
+	cmd.type = Type.GAME_OVER
+	cmd.params = {}
+	return cmd
+
+
+static func make_move_route(target: String, steps: Array, wait_for_completion: bool = true) -> EventCommand:
+	var cmd := EventCommand.new()
+	cmd.type = Type.MOVE_ROUTE
+	cmd.params = { "target": target, "steps": steps, "wait_for_completion": wait_for_completion }
 	return cmd

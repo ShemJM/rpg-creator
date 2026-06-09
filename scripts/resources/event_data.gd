@@ -10,11 +10,16 @@ extends Resource
 ## Self-switches for this event instance (A, B, C, D).
 var self_switches: Dictionary = { "A": false, "B": false, "C": false, "D": false }
 
+## Runtime-only: set by the ERASE_EVENT command. Reset at the start of each play-test.
+var erased: bool = false
+
 @export var pages: Array[EventPage] = []
 
 
 func get_active_page() -> EventPage:
 	## Returns the highest-index page whose conditions are met.
+	if erased:
+		return null
 	for i in range(pages.size() - 1, -1, -1):
 		if _page_conditions_met(pages[i]):
 			return pages[i]
