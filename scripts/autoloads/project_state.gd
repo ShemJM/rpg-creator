@@ -9,9 +9,81 @@ var current_map_index: int = -1
 var tileset: Array[TileDef] = []
 var current_project_path: String = ""
 
+var _texture_cache: Dictionary = {}
+
 
 func _ready() -> void:
 	tileset = TileDef.get_stub_tileset()
+
+
+func get_tile_texture(tile_def: TileDef) -> Texture2D:
+	if tile_def.source_path.is_empty():
+		return null
+	if _texture_cache.has(tile_def.source_path):
+		return _texture_cache[tile_def.source_path]
+	if not FileAccess.file_exists(tile_def.source_path):
+		return null
+	var img := Image.load_from_file(tile_def.source_path)
+	if img == null:
+		return null
+	var tex := ImageTexture.create_from_image(img)
+	_texture_cache[tile_def.source_path] = tex
+	return tex
+
+
+## Import a Tiled tileset JSON (.tsj / .json).
+## Replaces the current tileset with the imported tiles.
+## Returns an error string on failure, empty string on success.
+func import_tiled_tileset(path: String) -> String:
+	var file := FileAccess.open(path, FileAccess.READ)
+	if file == null:
+		return "Could not open file: %s" % path
+	var parsed = JSON.parse_string(file.get_as_text())
+	file.close()
+	if not parsed is Dictionary:
+		return "Invalid JSON in: %s" % path
+	var data: Dictionary = parsed
+	var img_rel: String = data.get("image", "")
+	if img_rel.is_empty():
+		return "Tileset has no 'image' field"
+	# Resolve image path relative to the .tsj file.
+	var base_dir := path.get_base_dir()
+	var img_path := (base_dir + "/" + img_rel).simplify_path()
+	var tw: int = data.get("tilewidth", 32)
+	var th: int = data.get("tileheight", 32)
+	var columns: int = data.get("columns", 1)
+	var tile_count: int = data.get("tilecount", 0)
+	if tw <= 0 or th <= 0 or columns <= 0 or tile_count <= 0:
+		return "Tileset has invalid tile dimensions or count"
+	# Build per-tile property map from the optional 'tiles' array.
+	var tile_props: Dictionary = {}
+	for tile_entry in data.get("tiles", []):
+		var tid: int = tile_entry.get("id", -1)
+		if tid < 0:
+			continue
+		var props: Dictionary = {}
+		for prop in tile_entry.get("properties", []):
+			props[prop.get("name", "")] = prop.get("value")
+		tile_props[tid] = props
+	tileset.clear()
+	_texture_cache.erase(img_path)
+	for i in range(tile_count):
+		var t := TileDef.new()
+		t.id = i
+		var col := i % columns
+		var row := i / columns
+		t.source_path = img_path
+		t.region = Rect2i(col * tw, row * th, tw, th)
+		t.tile_name = "Tile %d" % i
+		t.passable = true
+		if tile_props.has(i):
+			var p: Dictionary = tile_props[i]
+			if p.has("passable"):
+				t.passable = bool(p["passable"])
+			if p.has("name"):
+				t.tile_name = str(p["name"])
+		tileset.append(t)
+	return ""
 
 
 func create_new_project() -> void:
@@ -178,12 +250,39 @@ func serialize() -> Dictionary:
 	var maps_data: Array = []
 	for map in maps:
 		maps_data.append(_serialize_map(map))
-	return { "version": 1, "maps": maps_data }
+	var tileset_data: Array = []
+	for t in tileset:
+		tileset_data.append({
+			"id": t.id,
+			"tile_name": t.tile_name,
+			"color": [t.color.r, t.color.g, t.color.b, t.color.a],
+			"passable": t.passable,
+			"source_path": t.source_path,
+			"region": [t.region.position.x, t.region.position.y, t.region.size.x, t.region.size.y],
+		})
+	return { "version": 1, "maps": maps_data, "tileset": tileset_data }
 
 
 func deserialize(data: Dictionary) -> void:
 	maps.clear()
 	current_map_index = -1
+	_texture_cache.clear()
+	var raw_tileset: Array = data.get("tileset", [])
+	if raw_tileset.is_empty():
+		tileset = TileDef.get_stub_tileset()
+	else:
+		tileset.clear()
+		for td in raw_tileset:
+			var t := TileDef.new()
+			t.id = td.get("id", 0)
+			t.tile_name = td.get("tile_name", "Tile")
+			var c: Array = td.get("color", [1, 1, 1, 1])
+			t.color = Color(c[0], c[1], c[2], c[3])
+			t.passable = td.get("passable", true)
+			t.source_path = td.get("source_path", "")
+			var r: Array = td.get("region", [0, 0, 0, 0])
+			t.region = Rect2i(r[0], r[1], r[2], r[3])
+			tileset.append(t)
 	for map_data in data.get("maps", []):
 		maps.append(_deserialize_map(map_data))
 	if maps.size() > 0:
