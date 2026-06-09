@@ -6,9 +6,16 @@ extends Node
 signal finished()
 
 var _commands: Array = []
+var _page_commands: Array = []  # Original page command list — jump targets survive branch splicing.
 var _index: int = 0
 var _waiting: bool = false
 var _event: EventData = null
+var _stopped: bool = false
+
+
+## Abort execution. Pending one-shot signal handlers become no-ops.
+func stop() -> void:
+	_stopped = true
 
 
 func run_event(event: EventData) -> void:
@@ -18,8 +25,10 @@ func run_event(event: EventData) -> void:
 		finished.emit()
 		return
 	_commands = page.commands
+	_page_commands = page.commands
 	_index = 0
 	_waiting = false
+	_stopped = false
 	var map_id: int = -1
 	for map in ProjectState.maps:
 		if map.events.has(event):
@@ -30,6 +39,8 @@ func run_event(event: EventData) -> void:
 
 
 func _execute_next() -> void:
+	if _stopped:
+		return
 	if _index >= _commands.size():
 		SignalBus.trace_event_finished.emit(_event.event_name if _event else "", _event.id if _event else -1)
 		finished.emit()
@@ -63,9 +74,20 @@ func _execute_command(cmd: EventCommand) -> void:
 		EventCommand.Type.WAIT:
 			_cmd_wait(cmd.params)
 		EventCommand.Type.FADE_OUT:
-			_execute_next()  # Stub — no visual yet.
+			_cmd_fade(cmd.params, "out")
 		EventCommand.Type.FADE_IN:
+			_cmd_fade(cmd.params, "in")
+		EventCommand.Type.ERASE_EVENT:
+			_cmd_erase_event()
 			_execute_next()
+		EventCommand.Type.LABEL:
+			_execute_next()  # Labels are jump targets only.
+		EventCommand.Type.JUMP_TO_LABEL:
+			_cmd_jump_to_label(cmd.params)
+		EventCommand.Type.GAME_OVER:
+			_cmd_game_over()
+		EventCommand.Type.MOVE_ROUTE:
+			_cmd_move_route(cmd.params)
 		_:
 			_execute_next()
 
@@ -199,6 +221,7 @@ func _cmd_set_self_switch(params: Dictionary) -> void:
 	var value: bool = params.get("value", true)
 	if _event:
 		_event.self_switches[letter] = value
+		SignalBus.trace_self_switch_changed.emit(_event.id, letter, value)
 
 
 func _cmd_wait(params: Dictionary) -> void:
@@ -209,3 +232,72 @@ func _cmd_wait(params: Dictionary) -> void:
 		_waiting = false
 		_execute_next()
 	)
+
+
+func _cmd_fade(params: Dictionary, direction: String) -> void:
+	var duration: float = params.get("duration", 0.5)
+	_waiting = true
+	SignalBus.fade_finished.connect(func():
+		_waiting = false
+		_execute_next()
+	, CONNECT_ONE_SHOT)
+	SignalBus.fade_requested.emit(direction, duration)
+
+
+func _cmd_erase_event() -> void:
+	if _event:
+		_event.erased = true
+		SignalBus.event_erased.emit(_event.id)
+
+
+func _cmd_jump_to_label(params: Dictionary) -> void:
+	var target: String = params.get("name", "")
+	# Look in the active execution list first, then fall back to the page's
+	# original commands (a branch splice replaces _commands, which would
+	# otherwise hide page-level labels from jumps inside branches).
+	var idx := _find_label(_commands, target)
+	if idx < 0:
+		idx = _find_label(_page_commands, target)
+		if idx >= 0:
+			_commands = _page_commands
+	if idx >= 0:
+		_index = idx + 1
+		# Defer so a backwards jump can't recurse the stack into oblivion;
+		# tight loops advance at most once per idle frame.
+		_execute_next.call_deferred()
+		return
+	# No matching label — continue past the jump.
+	push_warning("[ER] JUMP_TO_LABEL: no label named '%s'" % target)
+	_execute_next()
+
+
+func _find_label(commands: Array, label_name: String) -> int:
+	for i in range(commands.size()):
+		var c: EventCommand = commands[i]
+		if c.type == EventCommand.Type.LABEL and str(c.params.get("name", "")) == label_name:
+			return i
+	return -1
+
+
+func _cmd_game_over() -> void:
+	SignalBus.trace_game_over.emit()
+	SignalBus.trace_event_finished.emit(_event.event_name if _event else "", _event.id if _event else -1)
+	finished.emit()
+	SignalBus.game_over_requested.emit()
+
+
+func _cmd_move_route(params: Dictionary) -> void:
+	var target: String = params.get("target", "player")
+	var steps: Array = params.get("steps", [])
+	var wait_for_completion: bool = params.get("wait_for_completion", true)
+	var event_id: int = _event.id if _event else -1
+	if wait_for_completion:
+		_waiting = true
+		SignalBus.move_route_finished.connect(func():
+			_waiting = false
+			_execute_next()
+		, CONNECT_ONE_SHOT)
+		SignalBus.move_route_requested.emit(event_id, target, steps)
+	else:
+		SignalBus.move_route_requested.emit(event_id, target, steps)
+		_execute_next()
