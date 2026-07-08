@@ -102,6 +102,8 @@ Exit codes: `0` = all assertions passed, `1` = assertion failures, `2` = fatal e
 | `expect_switch` | `id`, `value` | Assertion |
 | `expect_variable` | `id`, `value` | Assertion |
 | `expect_position` | `x`, `y`, `map_id` (optional) | Assertion on player grid position |
+| `expect_player_facing` | `x`, `y` | Assertion on the player's facing vector |
+| `expect_event_facing` | `id`, `x`, `y` | Assertion on an event sprite's facing vector |
 | `snapshot` | — | Emits current state to trace output |
 
 ---

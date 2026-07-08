@@ -52,12 +52,20 @@ func _draw() -> void:
 
 	# Draw events.
 	for ev: EventData in map.events:
-		var ev_rect := Rect2(Vector2(ev.x, ev.y) * CELL_SIZE + Vector2(4, 4), Vector2(CELL_SIZE - 8, CELL_SIZE - 8))
 		var page: EventPage = ev.get_active_page()
-		var ev_color := page.graphic_color if page else Color(0.8, 0.2, 0.2)
-		draw_rect(ev_rect, ev_color)
-		# Draw a small "E" label.
-		draw_string(ThemeDB.fallback_font, Vector2(ev.x * CELL_SIZE + 8, ev.y * CELL_SIZE + 22), "E", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color.WHITE)
+		var cell_pos := Vector2(ev.x, ev.y) * CELL_SIZE
+		var graphic: CharacterGraphic = page.graphic if page else null
+		var tex: Texture2D = ProjectState.load_texture(graphic.source_path) if (graphic and graphic.is_valid()) else null
+		if tex:
+			# Draw the down-facing idle frame as a thumbnail filling the cell.
+			var dest := Rect2(cell_pos, Vector2(CELL_SIZE, CELL_SIZE))
+			draw_texture_rect_region(tex, dest, Rect2(graphic.region_for(Vector2i(0, 1), 0)))
+		else:
+			var ev_rect := Rect2(cell_pos + Vector2(4, 4), Vector2(CELL_SIZE - 8, CELL_SIZE - 8))
+			var ev_color := page.graphic_color if page else Color(0.8, 0.2, 0.2)
+			draw_rect(ev_rect, ev_color)
+			# Draw a small "E" label.
+			draw_string(ThemeDB.fallback_font, Vector2(ev.x * CELL_SIZE + 8, ev.y * CELL_SIZE + 22), "E", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color.WHITE)
 
 	# Draw hover highlight.
 	var mouse_pos := get_local_mouse_position()

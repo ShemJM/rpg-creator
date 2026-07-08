@@ -39,8 +39,11 @@ enum Type {
 ## LABEL: { "name": "start" }
 ## JUMP_TO_LABEL: { "name": "start" }
 ## GAME_OVER: {}
-## MOVE_ROUTE: { "target": "player" | "this", "steps": ["up","down","left","right","wait"],
+## MOVE_ROUTE: { "target": "player" | "this",
+##               "steps": ["up","down","left","right","wait",
+##                         "face_up","face_down","face_left","face_right","turn_toward_player"],
 ##               "wait_for_completion": true }
+##   Movement steps walk one tile; face_* / turn_toward_player only change facing.
 @export var params: Dictionary = {}
 
 
