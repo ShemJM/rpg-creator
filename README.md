@@ -49,6 +49,7 @@ The editor lets you:
 | `scripts/runtime/player_character.gd` | `PlayerCharacter` | 2D `CharacterBody2D` — grid movement, event interaction |
 | `scripts/runtime/event_runner.gd` | `EventRunner` | Interprets event command lists; pauses for dialogue and choices |
 | `scripts/runtime/dialogue_box.gd` | `DialogueBox` | In-runtime dialogue/choice UI |
+| `scripts/runtime/character_sprite.gd` | `CharacterSprite` | Reusable directional/animated character sprite (charset or colour fallback) for the player and events |
 
 ### Resources
 
@@ -56,9 +57,10 @@ The editor lets you:
 |--------|-------|------|
 | `scripts/resources/map_data.gd` | `MapData` | Map dimensions, ground/surface layers, event list |
 | `scripts/resources/event_data.gd` | `EventData` | One event — position, name, list of pages |
-| `scripts/resources/event_page.gd` | `EventPage` | Trigger, conditions (switch/variable/self-switch), command list |
+| `scripts/resources/event_page.gd` | `EventPage` | Trigger, conditions (switch/variable/self-switch), command list, optional character graphic |
 | `scripts/resources/event_command.gd` | `EventCommand` | Single command — type enum + params dictionary |
 | `scripts/resources/tile_def.gd` | `TileDef` | Tile identity, name, passability, colour stub |
+| `scripts/resources/character_graphic.gd` | `CharacterGraphic` | Spritesheet (charset) — source path, frame slicing, direction rows, walk frames |
 
 ---
 

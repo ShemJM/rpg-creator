@@ -1,6 +1,6 @@
 # Current State
 
-> Last updated: 2026-06-09
+> Last updated: 2026-07-08
 
 ## What works
 
@@ -10,6 +10,8 @@
 - **Map list** — create multiple maps per project; switch between them.
 - **Event placement** — click any map cell in event mode to place or select an event.
 - **Event editor panel** — multi-page events; add/remove pages via tabs; per-page trigger selector (Action Button, Player Touch, Autorun, Parallel).
+- **Character graphics** — assign a spritesheet (charset) to an event page via a graphic picker (file + frame slicing + preview); events render as directional sprites on the map canvas and at runtime, with a colour-block fallback when unset.
+- **Tileset import** — import a Tiled `.tsj`/`.json` tileset; per-tile passability; palette shows tile thumbnails.
 - **Page conditions** — switch condition, self-switch condition, variable condition.
 - **Command list** — add commands from a dropdown; each command renders as an editable row in the list.
 - **All core commands** are editable in the panel: Show Text, Show Choices, Control Switches, Control Variables, Conditional Branch, Transfer Player, Set Self Switch, Wait, Fade Out/In, Move Route, Label, Jump to Label, Erase Event, Game Over.
@@ -17,7 +19,8 @@
 ### Runtime (play-test)
 
 - **Map rendering** — ground and surface layers drawn as coloured tiles; impassable tiles get static collision bodies.
-- **Player movement** — 4-directional grid-locked movement on passable tiles.
+- **Player movement** — 4-directional movement on passable tiles; player renders as an animated directional sprite (from `ProjectState.player_graphic`) that walks while moving and faces its heading, with a colour-block fallback.
+- **Event facing** — events turn to face the player when interacted with; `MOVE_ROUTE` supports `face_up/down/left/right` and `turn_toward_player` steps.
 - **Event triggering** — Action Button events fire on player interaction; Player Touch events fire on contact; Autorun events fire on map load.
 - **Event runner** — sequential command execution with coroutine-style pausing for dialogue and choices.
 - **Dialogue box** — shows speaker name + lines; advances on confirm input.
@@ -36,17 +39,16 @@
 
 ### Infrastructure
 
-- `ProjectState` autoload holds all map/event data in memory (no save/load yet).
+- `ProjectState` autoload holds all map/event data in memory and serializes it to JSON (`.rpgc`); save/load with a start screen and recent-projects list; also exposes an authoring service API for agents/tests. Project schema is at `version` 2 (adds character graphics; v1 projects load with null-graphic fallback).
 - `GameState` autoload manages runtime switches/variables.
 - `SignalBus` wires editor ↔ runtime events without direct coupling.
 - `DesignTokens` + `ThemeBuilder` provide a consistent dark UI theme.
 
 ## Known gaps / rough edges
 
-- **No save/load** — project data lives in memory only; closing Godot loses everything.
-- **No real tileset** — tiles are stub colour blocks; no image import.
-- **`PLAY_SE` is a stub** — advances immediately with no audio playback.
-- **No NPC/character sprites** — events show as coloured markers; no character graphics yet.
+- **`PLAY_SE` is a stub** — advances immediately with no audio playback (no BGM/SE yet).
+- **No database / party / combat** — no actors, items, skills, enemies, inventory, or battle system yet (see ROADMAP Phases B–F).
+- **Charsets are absolute paths** — event/player graphics reference images by absolute path, so projects aren't yet portable across machines.
 - **Map transfer UX** — Transfer Player command works at runtime but there is no editor UI for picking the target map by name.
 - **Parallel events + dialogue** — a parallel event showing text while a blocking event also waits on dialogue can cross-talk; parallel pages are best used for switch/variable/wait/move logic.
 - **No undo/redo** in the editor.

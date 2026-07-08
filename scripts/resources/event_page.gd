@@ -17,5 +17,7 @@ enum Trigger {
 @export var condition_variable_gte: int = 0
 
 @export var trigger: Trigger = Trigger.ACTION_BUTTON
-@export var graphic_color: Color = Color(0.8, 0.2, 0.2)  ## Stub visual for now
+@export var graphic_color: Color = Color(0.8, 0.2, 0.2)  ## Fallback when graphic is null
+## Optional character spritesheet for this page. Falls back to graphic_color when null.
+@export var graphic: CharacterGraphic = null
 @export var commands: Array[EventCommand] = []

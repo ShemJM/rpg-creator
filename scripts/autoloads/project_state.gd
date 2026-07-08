@@ -8,6 +8,8 @@ var maps: Array[MapData] = []
 var current_map_index: int = -1
 var tileset: Array[TileDef] = []
 var current_project_path: String = ""
+## Default spritesheet for the play-test player. Null = colour-block fallback.
+var player_graphic: CharacterGraphic = null
 
 var _texture_cache: Dictionary = {}
 
@@ -16,19 +18,25 @@ func _ready() -> void:
 	tileset = TileDef.get_stub_tileset()
 
 
-func get_tile_texture(tile_def: TileDef) -> Texture2D:
-	if tile_def.source_path.is_empty():
+## Load and cache a texture from an absolute path. Returns null if missing/invalid.
+## Shared by tiles and character graphics.
+func load_texture(path: String) -> Texture2D:
+	if path.is_empty():
 		return null
-	if _texture_cache.has(tile_def.source_path):
-		return _texture_cache[tile_def.source_path]
-	if not FileAccess.file_exists(tile_def.source_path):
+	if _texture_cache.has(path):
+		return _texture_cache[path]
+	if not FileAccess.file_exists(path):
 		return null
-	var img := Image.load_from_file(tile_def.source_path)
+	var img := Image.load_from_file(path)
 	if img == null:
 		return null
 	var tex := ImageTexture.create_from_image(img)
-	_texture_cache[tile_def.source_path] = tex
+	_texture_cache[path] = tex
 	return tex
+
+
+func get_tile_texture(tile_def: TileDef) -> Texture2D:
+	return load_texture(tile_def.source_path)
 
 
 ## Import a Tiled tileset JSON (.tsj / .json).
@@ -260,7 +268,12 @@ func serialize() -> Dictionary:
 			"source_path": t.source_path,
 			"region": [t.region.position.x, t.region.position.y, t.region.size.x, t.region.size.y],
 		})
-	return { "version": 1, "maps": maps_data, "tileset": tileset_data }
+	return {
+		"version": 2,
+		"maps": maps_data,
+		"tileset": tileset_data,
+		"player_graphic": player_graphic.to_dict() if player_graphic else null,
+	}
 
 
 func deserialize(data: Dictionary) -> void:
@@ -283,6 +296,9 @@ func deserialize(data: Dictionary) -> void:
 			var r: Array = td.get("region", [0, 0, 0, 0])
 			t.region = Rect2i(r[0], r[1], r[2], r[3])
 			tileset.append(t)
+	# Player graphic (added in version 2; absent in v1 projects → null fallback).
+	var pg = data.get("player_graphic", null)
+	player_graphic = CharacterGraphic.from_dict(pg) if pg is Dictionary else null
 	for map_data in data.get("maps", []):
 		maps.append(_deserialize_map(map_data))
 	if maps.size() > 0:
@@ -331,6 +347,7 @@ func _serialize_page(page: EventPage) -> Dictionary:
 	return {
 		"trigger": page.trigger,
 		"graphic_color": [page.graphic_color.r, page.graphic_color.g, page.graphic_color.b, page.graphic_color.a],
+		"graphic": page.graphic.to_dict() if page.graphic else null,
 		"condition_switch_id": page.condition_switch_id,
 		"condition_switch_value": page.condition_switch_value,
 		"condition_self_switch": page.condition_self_switch,
@@ -393,6 +410,8 @@ func _deserialize_page(data: Dictionary) -> EventPage:
 	page.trigger = data.get("trigger", 0) as EventPage.Trigger
 	var gc: Array = data.get("graphic_color", [0.8, 0.2, 0.2, 1.0])
 	page.graphic_color = Color(gc[0], gc[1], gc[2], gc[3])
+	var pg = data.get("graphic", null)
+	page.graphic = CharacterGraphic.from_dict(pg) if pg is Dictionary else null
 	page.condition_switch_id = data.get("condition_switch_id", -1)
 	page.condition_switch_value = data.get("condition_switch_value", true)
 	page.condition_self_switch = data.get("condition_self_switch", "")

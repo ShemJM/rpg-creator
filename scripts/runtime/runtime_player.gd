@@ -66,16 +66,14 @@ func _build_map(map: MapData) -> void:
 		var tile_id: int = map.surface_layer[coords]
 		_place_tile(coords, tile_id)
 
-	# Place event visuals. Every event gets a marker so page changes can
-	# show/hide or recolour it later without rebuilding the map.
+	# Place event visuals. Every event gets a character sprite so page changes can
+	# show/hide, recolour, or re-graphic it later without rebuilding the map.
 	for ev: EventData in map.events:
-		var ev_visual := ColorRect.new()
-		ev_visual.size = Vector2(CELL_SIZE - 8, CELL_SIZE - 8)
-		ev_visual.position = Vector2(ev.x * CELL_SIZE + 4, ev.y * CELL_SIZE + 4)
+		var ev_visual := CharacterSprite.new()
 		var page: EventPage = ev.get_active_page()
+		ev_visual.setup(page.graphic if page else null, page.graphic_color if page else Color(0.8, 0.2, 0.2))
+		ev_visual.position = _cell_center(Vector2i(ev.x, ev.y))
 		ev_visual.visible = page != null
-		if page:
-			ev_visual.color = page.graphic_color
 		add_child(ev_visual)
 		_event_visuals[ev.id] = ev_visual
 
@@ -227,10 +225,21 @@ func get_snapshot() -> Dictionary:
 	for i in range(GameState.variables.size()):
 		if GameState.variables[i] != 0:
 			variables[str(i)] = GameState.variables[i]
+	var player_facing := Vector2i(0, 1)
+	if _player:
+		player_facing = (_player as PlayerCharacter).facing_direction
+	var event_facing: Dictionary = {}
+	for event_id in _event_visuals:
+		var sprite: CharacterSprite = _event_visuals[event_id]
+		if sprite:
+			var d: Vector2i = sprite.get_direction()
+			event_facing[str(event_id)] = { "x": d.x, "y": d.y }
 	return {
 		"map_id": _current_map.id if _current_map else -1,
 		"map_name": _current_map.map_name if _current_map else "",
 		"player_grid": { "x": player_grid.x, "y": player_grid.y },
+		"player_facing": { "x": player_facing.x, "y": player_facing.y },
+		"event_facing": event_facing,
 		"event_running": _event_running,
 		"switches_on": switches,
 		"variables": variables,
@@ -257,6 +266,7 @@ func _try_interact() -> void:
 	if page == null:
 		return
 	if page.trigger == EventPage.Trigger.ACTION_BUTTON:
+		_face_event_toward_player(ev)
 		_run_event(ev)
 
 
@@ -362,14 +372,15 @@ func _refresh_events() -> void:
 		return
 	for ev: EventData in _current_map.events:
 		var page: EventPage = ev.get_active_page()
-		var visual: ColorRect = _event_visuals.get(ev.id)
+		var visual: CharacterSprite = _event_visuals.get(ev.id)
+		var page_index: int = ev.pages.find(page) if page else -1
+		var page_changed: bool = page_index != _last_active_pages.get(ev.id, -1)
 		if visual:
 			visual.visible = page != null
-			if page:
-				visual.color = page.graphic_color
-			visual.position = Vector2(ev.x * CELL_SIZE + 4, ev.y * CELL_SIZE + 4)
-		var page_index: int = ev.pages.find(page) if page else -1
-		if page_index != _last_active_pages.get(ev.id, -1):
+			visual.position = _cell_center(Vector2i(ev.x, ev.y))
+			if page_changed:
+				visual.setup(page.graphic if page else null, page.graphic_color if page else Color(0.8, 0.2, 0.2))
+		if page_changed:
 			_last_active_pages[ev.id] = page_index
 			if page and page.trigger == EventPage.Trigger.AUTORUN:
 				if _event_running:
@@ -462,18 +473,64 @@ func _on_move_route_requested(event_id: int, target: String, steps: Array) -> vo
 func _execute_move_route(event_id: int, target: String, steps: Array) -> void:
 	for step in steps:
 		var step_name := str(step)
-		if step_name != "wait":
+		if step_name == "wait":
+			pass
+		elif step_name == "turn_toward_player":
+			_turn_toward_player(event_id, target)
+		elif step_name.begins_with("face_"):
+			_face_target(event_id, target, _direction_vector(step_name.substr(5)))
+		else:
 			var dir := _direction_vector(step_name)
-			if dir == Vector2i.ZERO:
-				continue
-			if target == "player":
-				_step_player(dir)
-			else:
-				_step_event(event_id, dir)
+			if dir != Vector2i.ZERO:
+				if target == "player":
+					_step_player(dir)
+				else:
+					_step_event(event_id, dir)
 		await get_tree().create_timer(MOVE_ROUTE_STEP_SECONDS).timeout
 		if not is_inside_tree():
 			return  # Play-test ended mid-route.
 	SignalBus.move_route_finished.emit()
+
+
+## Turn a move-route target to face a direction without moving it.
+func _face_target(event_id: int, target: String, dir: Vector2i) -> void:
+	if dir == Vector2i.ZERO:
+		return
+	if target == "player":
+		if _player:
+			(_player as PlayerCharacter).facing_direction = dir
+	else:
+		var visual: CharacterSprite = _event_visuals.get(event_id)
+		if visual:
+			visual.set_direction(dir)
+
+
+func _turn_toward_player(event_id: int, target: String) -> void:
+	if target == "player" or _player == null:
+		return
+	var ev := _find_event_by_id(event_id)
+	if ev == null:
+		return
+	_face_event_toward_player(ev)
+
+
+## Turn an event's sprite to face the player (dominant axis).
+func _face_event_toward_player(ev: EventData) -> void:
+	var visual: CharacterSprite = _event_visuals.get(ev.id)
+	if visual == null or _player == null:
+		return
+	var player_grid := Vector2i(
+		int(_player.position.x) / CELL_SIZE,
+		int(_player.position.y) / CELL_SIZE
+	)
+	var dx: int = player_grid.x - ev.x
+	var dy: int = player_grid.y - ev.y
+	if dx == 0 and dy == 0:
+		return
+	if absi(dx) >= absi(dy):
+		visual.set_direction(Vector2i(signi(dx), 0))
+	else:
+		visual.set_direction(Vector2i(0, signi(dy)))
 
 
 func _direction_vector(direction: String) -> Vector2i:
@@ -505,14 +562,21 @@ func _step_event(event_id: int, dir: Vector2i) -> void:
 	var ev := _find_event_by_id(event_id)
 	if ev == null:
 		return
+	var visual: CharacterSprite = _event_visuals.get(event_id)
+	if visual:
+		visual.set_direction(dir)
 	var target_cell := Vector2i(ev.x, ev.y) + dir
 	if not _is_cell_passable(target_cell):
-		return
+		return  # Blocked: keep the new facing, skip the move.
 	ev.x = target_cell.x
 	ev.y = target_cell.y
-	var visual: ColorRect = _event_visuals.get(event_id)
 	if visual:
-		visual.position = Vector2(ev.x * CELL_SIZE + 4, ev.y * CELL_SIZE + 4)
+		visual.position = _cell_center(target_cell)
+
+
+## World-space centre of a grid cell.
+func _cell_center(cell: Vector2i) -> Vector2:
+	return Vector2(cell) * CELL_SIZE + Vector2(CELL_SIZE / 2.0, CELL_SIZE / 2.0)
 
 
 func _is_cell_passable(cell: Vector2i) -> bool:

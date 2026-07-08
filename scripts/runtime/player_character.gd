@@ -12,14 +12,16 @@ var facing_direction: Vector2i = Vector2i(0, 1)
 var _scripted_dir: Vector2 = Vector2.ZERO
 var _use_scripted: bool = false
 
+var _char_sprite: CharacterSprite = null
+
 
 func _ready() -> void:
-	# Visual — colored rect.
-	var sprite := ColorRect.new()
-	sprite.color = Color(0.9, 0.85, 0.2)
-	sprite.size = Vector2(SIZE, SIZE)
-	sprite.position = Vector2(-SIZE / 2.0, -SIZE / 2.0)
-	add_child(sprite)
+	# Visual — directional character sprite (falls back to a colour block when the
+	# project has no player graphic assigned).
+	_char_sprite = CharacterSprite.new()
+	_char_sprite.setup(ProjectState.player_graphic, Color(0.9, 0.85, 0.2))
+	_char_sprite.set_direction(facing_direction)
+	add_child(_char_sprite)
 
 	# Collision shape.
 	var col := CollisionShape2D.new()
@@ -62,3 +64,7 @@ func _physics_process(_delta: float) -> void:
 	if input_dir != Vector2.ZERO:
 		facing_direction = Vector2i(roundi(input_dir.x), roundi(input_dir.y))
 	move_and_slide()
+
+	if _char_sprite:
+		_char_sprite.set_direction(facing_direction)
+		_char_sprite.set_moving(velocity.length() > 1.0)

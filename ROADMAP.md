@@ -24,12 +24,13 @@ The most critical gap. Nothing else matters until project data survives a sessio
 
 ---
 
-## Phase 3 — Character Graphics
+## Phase 3 — Character Graphics ✓
 
-- [ ] NPC/event sprite: assign a spritesheet + frame index to an event page
-- [ ] Event moves and faces the player on interaction
-- [ ] Player spritesheet with walk animation (4-directional)
-- [ ] Simple 4-frame walk cycle in the runtime
+- [x] NPC/event sprite: assign a spritesheet (charset) to an event page
+- [x] Event faces the player on interaction; `MOVE_ROUTE` gains `face_*` / `turn_toward_player` steps
+- [x] Player spritesheet with walk animation (4-directional)
+- [x] Walk cycle in the runtime (animates only while moving)
+- [x] Editor graphic picker + charset thumbnails on the map canvas
 
 ---
 

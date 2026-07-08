@@ -15,6 +15,8 @@ extends Node
 ##     { "action": "expect_switch",     "id": 1,  "value": true },
 ##     { "action": "expect_variable",   "id": 0,  "value": 2 },
 ##     { "action": "expect_position",   "map_id": 0, "x": 5, "y": 7 },
+##     { "action": "expect_player_facing", "x": -1, "y": 0 },   // player facing vector
+##     { "action": "expect_event_facing",  "id": 0, "x": 1, "y": 0 }, // event's facing vector
 ##     { "action": "snapshot" }         // emits trace_snapshot signal with current state
 ##   ]
 ## }
@@ -161,6 +163,29 @@ func _process_next_step() -> void:
 					map_id, exp_x, exp_y,
 					snap["map_id"], snap["player_grid"]["x"], snap["player_grid"]["y"]
 				]
+			)
+			_process_next_step()
+
+		"expect_player_facing":
+			var exp_fx: int = step.get("x", 0)
+			var exp_fy: int = step.get("y", 0)
+			var fsnap: Dictionary = _runtime.get_snapshot()
+			var pf: Dictionary = fsnap.get("player_facing", {})
+			_record_assertion(
+				pf.get("x", 999) == exp_fx and pf.get("y", 999) == exp_fy,
+				"expect_player_facing (%d,%d) : got (%s,%s)" % [exp_fx, exp_fy, str(pf.get("x")), str(pf.get("y"))]
+			)
+			_process_next_step()
+
+		"expect_event_facing":
+			var ev_id: int = step.get("id", 0)
+			var efx: int = step.get("x", 0)
+			var efy: int = step.get("y", 0)
+			var esnap: Dictionary = _runtime.get_snapshot()
+			var ef: Dictionary = esnap.get("event_facing", {}).get(str(ev_id), {})
+			_record_assertion(
+				ef.get("x", 999) == efx and ef.get("y", 999) == efy,
+				"expect_event_facing[%d] (%d,%d) : got (%s,%s)" % [ev_id, efx, efy, str(ef.get("x")), str(ef.get("y"))]
 			)
 			_process_next_step()
 
