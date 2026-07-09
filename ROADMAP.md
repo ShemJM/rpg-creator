@@ -34,6 +34,22 @@ The most critical gap. Nothing else matters until project data survives a sessio
 
 ---
 
+## Phase 3.5 — Database (Actors / Items / Equipment) ✓ (subset)
+
+The data backbone consumed by party/inventory/shops (and later combat).
+
+- [x] Database editor panel wired to the `Database` nav button (Maps ↔ Database switching)
+- [x] Actors (name, class, level, base stats, charset) — reuses the Phase 3 graphic picker
+- [x] Classes (name, base stats)
+- [x] Items (name, description, price, consumable, restore-HP/MP effect data)
+- [x] Weapons & Armor (unified `EquipData`, split tabs by kind, stat bonuses)
+- [x] Flat `StatBlock` (hp/mp/atk/def/mat/mdf/agi/luk) shared across the above
+- [x] Project schema `version` 3 + serialization; headless `--list-database`
+- [ ] Skills / Enemies / Troops — deferred to the battle phase (need combat to be useful)
+- [ ] Per-level stat growth curves — deferred to the battle phase
+
+---
+
 ## Phase 4 — More Event Commands
 
 Commands that round out the scripting system:

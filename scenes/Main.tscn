@@ -53,7 +53,6 @@ text = "Maps"
 
 [node name="Database" type="Button" parent="HSplit/NavPanel/VBox/NavBar"]
 layout_mode = 2
-disabled = true
 text = "Database"
 
 [node name="Events" type="Button" parent="HSplit/NavPanel/VBox/NavBar"]

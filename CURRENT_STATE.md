@@ -12,6 +12,7 @@
 - **Event editor panel** — multi-page events; add/remove pages via tabs; per-page trigger selector (Action Button, Player Touch, Autorun, Parallel).
 - **Character graphics** — assign a spritesheet (charset) to an event page via a graphic picker (file + frame slicing + preview); events render as directional sprites on the map canvas and at runtime, with a colour-block fallback when unset.
 - **Tileset import** — import a Tiled `.tsj`/`.json` tileset; per-tile passability; palette shows tile thumbnails.
+- **Database editor** — reached via the `Database` nav button (Maps ↔ Database switching). Authors Actors (name/class/level/base stats/charset), Classes, Items (price/consumable/HP·MP restore), and Weapons/Armor (stat bonuses). Shared flat `StatBlock` (hp/mp/atk/def/mat/mdf/agi/luk). Persisted in the project (schema v3).
 - **Page conditions** — switch condition, self-switch condition, variable condition.
 - **Command list** — add commands from a dropdown; each command renders as an editable row in the list.
 - **All core commands** are editable in the panel: Show Text, Show Choices, Control Switches, Control Variables, Conditional Branch, Transfer Player, Set Self Switch, Wait, Fade Out/In, Move Route, Label, Jump to Label, Erase Event, Game Over.
@@ -47,7 +48,8 @@
 ## Known gaps / rough edges
 
 - **`PLAY_SE` is a stub** — advances immediately with no audio playback (no BGM/SE yet).
-- **No database / party / combat** — no actors, items, skills, enemies, inventory, or battle system yet (see ROADMAP Phases B–F).
+- **Database is authoring-only** — actors/classes/items/weapons/armor are stored but not yet consumed at runtime (party, inventory, shops, and combat come in later phases). No skills/enemies/troops yet.
+- **No party / inventory / combat** — `GameState` still holds only switches/variables; no party, gold, inventory, or battle system yet.
 - **Charsets are absolute paths** — event/player graphics reference images by absolute path, so projects aren't yet portable across machines.
 - **Map transfer UX** — Transfer Player command works at runtime but there is no editor UI for picking the target map by name.
 - **Parallel events + dialogue** — a parallel event showing text while a blocking event also waits on dialogue can cross-talk; parallel pages are best used for switch/variable/wait/move logic.

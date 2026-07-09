@@ -36,10 +36,12 @@ The editor lets you:
 
 | Script | Class | Role |
 |--------|-------|------|
-| `scripts/editor/editor_shell.gd` | `EditorShell` | Top-level editor layout — tabs, play-test toggle |
+| `scripts/editor/editor_shell.gd` | `EditorShell` | Top-level editor layout — Maps/Database nav, play-test toggle |
 | `scripts/editor/map_editor.gd` | `MapEditor` | Map list, tile palette, layer/tool selector, canvas |
 | `scripts/editor/map_canvas.gd` | `MapCanvas` | SubViewport tile renderer + mouse input for paint/place |
 | `scripts/editor/event_editor_panel.gd` | `EventEditorPanel` | Page list, trigger/condition settings, command list |
+| `scripts/editor/database_panel.gd` | `DatabasePanel` | Database editor — actors, classes, items, weapons, armor |
+| `scripts/editor/graphic_picker.gd` | `GraphicPicker` | Shared charset-authoring popup (event pages + actors) |
 
 ### Runtime
 
@@ -61,6 +63,11 @@ The editor lets you:
 | `scripts/resources/event_command.gd` | `EventCommand` | Single command — type enum + params dictionary |
 | `scripts/resources/tile_def.gd` | `TileDef` | Tile identity, name, passability, colour stub |
 | `scripts/resources/character_graphic.gd` | `CharacterGraphic` | Spritesheet (charset) — source path, frame slicing, direction rows, walk frames |
+| `scripts/resources/stat_block.gd` | `StatBlock` | The 8 core stats (hp/mp/atk/def/mat/mdf/agi/luk); shared by actors/classes/equipment |
+| `scripts/resources/actor_data.gd` | `ActorData` | Playable character — name, class, level, stats, charset |
+| `scripts/resources/class_data.gd` | `ClassData` | Character class — name, base stats |
+| `scripts/resources/item_data.gd` | `ItemData` | Item — name, description, price, consumable, effect |
+| `scripts/resources/equip_data.gd` | `EquipData` | Weapon or armor (by `kind`) — slot, price, stat bonuses |
 
 ---
 

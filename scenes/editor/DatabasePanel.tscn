@@ -1,0 +1,56 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/editor/database_panel.gd" id="1_db"]
+
+[node name="DatabasePanel" type="VBoxContainer"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+script = ExtResource("1_db")
+
+[node name="CategoryTabs" type="HBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="Body" type="HSplitContainer" parent="."]
+layout_mode = 2
+size_flags_vertical = 3
+split_offset = 200
+
+[node name="LeftPanel" type="VBoxContainer" parent="Body"]
+layout_mode = 2
+custom_minimum_size = Vector2(200, 0)
+
+[node name="EntryScroll" type="ScrollContainer" parent="Body/LeftPanel"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="EntryList" type="VBoxContainer" parent="Body/LeftPanel/EntryScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="EntryButtons" type="HBoxContainer" parent="Body/LeftPanel"]
+layout_mode = 2
+
+[node name="AddBtn" type="Button" parent="Body/LeftPanel/EntryButtons"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "+ Add"
+
+[node name="DeleteBtn" type="Button" parent="Body/LeftPanel/EntryButtons"]
+layout_mode = 2
+text = "Delete"
+
+[node name="EditorScroll" type="ScrollContainer" parent="Body"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="EditorForm" type="VBoxContainer" parent="Body/EditorScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 6

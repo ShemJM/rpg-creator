@@ -3,9 +3,12 @@ extends MarginContainer
 ## Main editor navigation shell. Manages switching between editor panels.
 
 var _map_editor: Control = null
+var _database_panel: Control = null
 var _runtime_player: Node = null
 
 @onready var _nav_bar: VBoxContainer = $HSplit/NavPanel/VBox/NavBar
+@onready var _maps_btn: Button = $HSplit/NavPanel/VBox/NavBar/Maps
+@onready var _database_btn: Button = $HSplit/NavPanel/VBox/NavBar/Database
 @onready var _content_area: Control = $HSplit/ContentArea
 @onready var _playtest_btn: Button = $HSplit/NavPanel/VBox/PlayTestButton
 @onready var _project_label: Label = $HSplit/NavPanel/VBox/ProjectLabel
@@ -21,9 +24,17 @@ func _ready() -> void:
 	_save_btn.pressed.connect(_on_save_pressed)
 	_save_as_btn.pressed.connect(_on_save_as_pressed)
 	_close_btn.pressed.connect(_on_close_pressed)
+	# Nav: exclusive toggle between the Maps and Database panels.
+	var nav_group := ButtonGroup.new()
+	_maps_btn.toggle_mode = true
+	_maps_btn.button_group = nav_group
+	_database_btn.toggle_mode = true
+	_database_btn.button_group = nav_group
+	_maps_btn.pressed.connect(func() -> void: _show_panel("maps"))
+	_database_btn.pressed.connect(func() -> void: _show_panel("database"))
 	_update_project_label()
 	# Open map editor by default.
-	_show_map_editor()
+	_show_panel("maps")
 
 
 func _unhandled_key_input(event: InputEvent) -> void:
@@ -41,12 +52,19 @@ func _update_project_label() -> void:
 		_project_label.text = path.get_file().get_basename()
 
 
-func _show_map_editor() -> void:
+func _show_panel(which: String) -> void:
 	if _map_editor == null:
-		var scene := load("res://scenes/editor/MapEditor.tscn") as PackedScene
-		_map_editor = scene.instantiate()
+		_map_editor = (load("res://scenes/editor/MapEditor.tscn") as PackedScene).instantiate()
 		_content_area.add_child(_map_editor)
-	_map_editor.show()
+	if _database_panel == null:
+		_database_panel = (load("res://scenes/editor/DatabasePanel.tscn") as PackedScene).instantiate()
+		_content_area.add_child(_database_panel)
+		_database_panel.hide()
+	var show_maps: bool = which == "maps"
+	_map_editor.visible = show_maps
+	_database_panel.visible = not show_maps
+	_maps_btn.button_pressed = show_maps
+	_database_btn.button_pressed = not show_maps
 
 
 func _on_save_pressed() -> void:
