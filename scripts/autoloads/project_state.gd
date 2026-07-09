@@ -11,6 +11,12 @@ var current_project_path: String = ""
 ## Default spritesheet for the play-test player. Null = colour-block fallback.
 var player_graphic: CharacterGraphic = null
 
+# --- Database (Phase B) ---
+var actors: Array[ActorData] = []
+var classes: Array[ClassData] = []
+var items: Array[ItemData] = []
+var equipment: Array[EquipData] = []  ## weapons + armor, distinguished by EquipData.kind
+
 var _texture_cache: Dictionary = {}
 
 
@@ -98,7 +104,20 @@ func create_new_project() -> void:
 	maps.clear()
 	current_map_index = -1
 	current_project_path = ""
+	player_graphic = null
+	_seed_default_database()
 	add_map("Map 001")
+
+
+## Seed a minimal database so a fresh project has a starting party member.
+func _seed_default_database() -> void:
+	actors.clear()
+	classes.clear()
+	items.clear()
+	equipment.clear()
+	var cls := add_class("Hero")
+	var hero := add_actor("Hero")
+	hero.class_id = cls.id
 
 
 func add_map(map_name: String = "New Map") -> MapData:
@@ -212,6 +231,97 @@ func list_maps() -> Array:
 
 
 # ---------------------------------------------------------------------------
+# Database authoring API — for the editor, agents, and scenario scripts
+# ---------------------------------------------------------------------------
+
+func add_actor(actor_name: String = "New Actor") -> ActorData:
+	var a := ActorData.new()
+	a.id = _next_id(actors)
+	a.actor_name = actor_name
+	actors.append(a)
+	return a
+
+
+func add_class(class_name_: String = "New Class") -> ClassData:
+	var c := ClassData.new()
+	c.id = _next_id(classes)
+	c.class_name_ = class_name_
+	classes.append(c)
+	return c
+
+
+func add_item(item_name: String = "New Item") -> ItemData:
+	var it := ItemData.new()
+	it.id = _next_id(items)
+	it.item_name = item_name
+	items.append(it)
+	return it
+
+
+func add_equip(equip_name: String = "New Equipment", kind: String = EquipData.KIND_WEAPON) -> EquipData:
+	var e := EquipData.new()
+	e.id = _next_id(equipment)
+	e.equip_name = equip_name
+	e.kind = kind
+	equipment.append(e)
+	return e
+
+
+func get_actor_by_id(actor_id: int) -> ActorData:
+	for a in actors:
+		if a.id == actor_id:
+			return a
+	return null
+
+
+func get_class_by_id(class_id: int) -> ClassData:
+	for c in classes:
+		if c.id == class_id:
+			return c
+	return null
+
+
+func get_item_by_id(item_id: int) -> ItemData:
+	for it in items:
+		if it.id == item_id:
+			return it
+	return null
+
+
+func get_equip_by_id(equip_id: int) -> EquipData:
+	for e in equipment:
+		if e.id == equip_id:
+			return e
+	return null
+
+
+## Next unused id (max existing + 1) so ids stay stable after deletions.
+func _next_id(list: Array) -> int:
+	var max_id: int = -1
+	for entry in list:
+		max_id = maxi(max_id, entry.id)
+	return max_id + 1
+
+
+## Structured database summary for agent/CI inspection (see headless --list-database).
+func database_summary() -> Dictionary:
+	return {
+		"actors": _summary_entries(actors, "actor_name"),
+		"classes": _summary_entries(classes, "class_name_"),
+		"items": _summary_entries(items, "item_name"),
+		"weapons": _summary_entries(equipment.filter(func(e): return e.kind == EquipData.KIND_WEAPON), "equip_name"),
+		"armor": _summary_entries(equipment.filter(func(e): return e.kind == EquipData.KIND_ARMOR), "equip_name"),
+	}
+
+
+func _summary_entries(list: Array, name_field: String) -> Array:
+	var out: Array = []
+	for entry in list:
+		out.append({ "id": entry.id, "name": entry.get(name_field) })
+	return out
+
+
+# ---------------------------------------------------------------------------
 # Save / Load
 # ---------------------------------------------------------------------------
 
@@ -269,11 +379,25 @@ func serialize() -> Dictionary:
 			"region": [t.region.position.x, t.region.position.y, t.region.size.x, t.region.size.y],
 		})
 	return {
-		"version": 2,
+		"version": 3,
 		"maps": maps_data,
 		"tileset": tileset_data,
 		"player_graphic": player_graphic.to_dict() if player_graphic else null,
+		"database": {
+			"actors": _dicts(actors),
+			"classes": _dicts(classes),
+			"items": _dicts(items),
+			"equipment": _dicts(equipment),
+		},
 	}
+
+
+## Map an array of resources (each with to_dict()) to an array of dictionaries.
+func _dicts(list: Array) -> Array:
+	var out: Array = []
+	for entry in list:
+		out.append(entry.to_dict())
+	return out
 
 
 func deserialize(data: Dictionary) -> void:
@@ -299,10 +423,27 @@ func deserialize(data: Dictionary) -> void:
 	# Player graphic (added in version 2; absent in v1 projects → null fallback).
 	var pg = data.get("player_graphic", null)
 	player_graphic = CharacterGraphic.from_dict(pg) if pg is Dictionary else null
+	# Database (added in version 3; absent in older projects → empty).
+	_deserialize_database(data.get("database", {}))
 	for map_data in data.get("maps", []):
 		maps.append(_deserialize_map(map_data))
 	if maps.size() > 0:
 		current_map_index = 0
+
+
+func _deserialize_database(db: Dictionary) -> void:
+	actors.clear()
+	classes.clear()
+	items.clear()
+	equipment.clear()
+	for d in db.get("actors", []):
+		actors.append(ActorData.from_dict(d))
+	for d in db.get("classes", []):
+		classes.append(ClassData.from_dict(d))
+	for d in db.get("items", []):
+		items.append(ItemData.from_dict(d))
+	for d in db.get("equipment", []):
+		equipment.append(EquipData.from_dict(d))
 
 
 func _serialize_map(map: MapData) -> Dictionary:

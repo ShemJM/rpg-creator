@@ -32,6 +32,7 @@ Usage:
   --scenario <path>      Run a scenario JSON file and report results.
   --project  <path>      Load a project (use with --list-maps or --scenario).
   --list-maps            Print a JSON array of all maps and exit.
+  --list-database        Print a JSON summary of the project database and exit.
   --map-id   <int>       Override the start map id for --scenario.
   --output   <path>      Write JSON results to this file (for GUI binary use).
   --help                 Print this message.
@@ -50,6 +51,7 @@ func _ready() -> void:
 	var map_id_str: String    = _get_arg(args, "--map-id")
 	var output_path: String   = _get_arg(args, "--output")
 	var list_maps: bool       = "--list-maps" in args
+	var list_database: bool   = "--list-database" in args
 
 	# Load project if given.
 	if not project_path.is_empty():
@@ -77,11 +79,19 @@ func _ready() -> void:
 		get_tree().quit(0)
 		return
 
+	if list_database:
+		var db_json: String = JSON.stringify(ProjectState.database_summary(), "\t")
+		print(db_json)
+		if not output_path.is_empty():
+			_write_file(output_path, db_json)
+		get_tree().quit(0)
+		return
+
 	if not scenario_path.is_empty():
 		await _run_scenario(scenario_path, output_path)
 		return
 
-	push_error("[Headless] No action specified. Use --scenario or --list-maps.")
+	push_error("[Headless] No action specified. Use --scenario, --list-maps, or --list-database.")
 	get_tree().quit(2)
 
 

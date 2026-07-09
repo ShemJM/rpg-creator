@@ -1,0 +1,44 @@
+{
+	"actors": [
+		{
+			"id": 0,
+			"name": "Aria"
+		},
+		{
+			"id": 1,
+			"name": "Bram"
+		}
+	],
+	"classes": [
+		{
+			"id": 0,
+			"name": "Hero"
+		},
+		{
+			"id": 1,
+			"name": "Mage"
+		}
+	],
+	"items": [
+		{
+			"id": 0,
+			"name": "Potion"
+		},
+		{
+			"id": 1,
+			"name": "Ether"
+		}
+	],
+	"weapons": [
+		{
+			"id": 0,
+			"name": "Short Sword"
+		}
+	],
+	"armor": [
+		{
+			"id": 1,
+			"name": "Leather Armor"
+		}
+	]
+}

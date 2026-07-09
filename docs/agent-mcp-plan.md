@@ -41,7 +41,8 @@ This document describes the planned interface surface for agent-driven game crea
 | Capability | Location | Status |
 |---|---|---|
 | Project save / load JSON | `scripts/autoloads/project_state.gd` | ✅ |
-| Authoring service API | `ProjectState.add_map_sized`, `paint_tile`, `fill_rect`, `place_event`, `append_command`, `list_maps` | ✅ |
+| Authoring service API (maps/events) | `ProjectState.add_map_sized`, `paint_tile`, `fill_rect`, `place_event`, `append_command`, `list_maps` | ✅ |
+| Authoring service API (database) | `ProjectState.add_actor/add_class/add_item/add_equip`, `get_*_by_id`, `database_summary` | ✅ |
 | Scripted player movement | `PlayerCharacter.scripted_move()` | ✅ |
 | Scripted interact | `RuntimePlayer.scripted_interact()` | ✅ |
 | Scripted dialogue advance | `RuntimePlayer.scripted_advance_dialogue()` | ✅ |
@@ -59,6 +60,10 @@ This document describes the planned interface surface for agent-driven game crea
 # List maps in a project
 Godot_v4.x --headless --path . --script scripts/runtime/headless_runner.gd \
   -- --project games/test.rpgm --list-maps
+
+# List the project database (actors/classes/items/weapons/armor)
+Godot_v4.x --headless --path . --script scripts/runtime/headless_runner.gd \
+  -- --project games/database_test.rpgc --list-database
 
 # Run a scenario file
 Godot_v4.x --headless --path . --script scripts/runtime/headless_runner.gd \
