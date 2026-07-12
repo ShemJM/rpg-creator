@@ -24,7 +24,9 @@
 								{ "type": 1, "params": { "choices": [] } },
 								{ "type": 3, "params": { "ids": [200], "op": "divide", "value": 1 } },
 								{ "type": 6, "params": { "letter": "Z", "value": true } },
-								{ "type": 15, "params": { "target": "npc", "steps": ["teleport"] } }
+								{ "type": 15, "params": { "target": "npc", "steps": ["teleport"] } },
+								{ "type": "USE_ITEM", "params": { "item_id": 99, "actor_id": 0 } },
+								{ "type": "CHANGE_EQUIPMENT", "params": { "actor_id": 0, "slot": "belt", "equip_id": 42 } }
 							]
 						}
 					]
@@ -39,6 +41,10 @@
 			]
 		}
 	],
+	"system": {
+		"starting_party": [99],
+		"starting_gold": -5
+	},
 	"database": {
 		"actors": [ { "id": 0, "actor_name": "Orphan", "class_id": 5 } ],
 		"classes": [],

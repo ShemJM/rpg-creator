@@ -17,6 +17,11 @@ var classes: Array[ClassData] = []
 var items: Array[ItemData] = []
 var equipment: Array[EquipData] = []  ## weapons + armor, distinguished by EquipData.kind
 
+## Project-level runtime settings (serialized as top-level "system"):
+## { "starting_party": [actor_id, ...], "starting_gold": int }
+## Empty starting_party = default to the lowest actor id at play-test start.
+var system_settings: Dictionary = { "starting_party": [], "starting_gold": 0 }
+
 var _texture_cache: Dictionary = {}
 
 
@@ -146,6 +151,7 @@ func _seed_default_database() -> void:
 	var cls := add_class("Hero")
 	var hero := add_actor("Hero")
 	hero.class_id = cls.id
+	system_settings = { "starting_party": [hero.id], "starting_gold": 0 }
 
 
 func add_map(map_name: String = "New Map") -> MapData:
@@ -415,10 +421,11 @@ func serialize() -> Dictionary:
 			d["graphic"]["source_path"] = make_project_relative(str(d["graphic"].get("source_path", "")))
 		actors_data.append(d)
 	return {
-		"version": 4,
+		"version": 5,
 		"maps": maps_data,
 		"tileset": tileset_data,
 		"player_graphic": _portable_graphic(player_graphic),
+		"system": system_settings.duplicate(true),
 		"database": {
 			"actors": actors_data,
 			"classes": _dicts(classes),
@@ -468,6 +475,12 @@ func deserialize(data: Dictionary) -> void:
 	# Player graphic (added in version 2; absent in v1 projects → null fallback).
 	var pg = data.get("player_graphic", null)
 	player_graphic = CharacterGraphic.from_dict(pg) if pg is Dictionary else null
+	# System settings (added in version 5; defaults when absent).
+	var sys: Variant = data.get("system", {})
+	system_settings = {
+		"starting_party": (sys as Dictionary).get("starting_party", []) if sys is Dictionary else [],
+		"starting_gold": int((sys as Dictionary).get("starting_gold", 0)) if sys is Dictionary else 0,
+	}
 	# Database (added in version 3; absent in older projects → empty).
 	_deserialize_database(data.get("database", {}))
 	for map_data in data.get("maps", []):

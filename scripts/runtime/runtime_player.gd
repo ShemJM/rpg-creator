@@ -240,6 +240,25 @@ func get_snapshot() -> Dictionary:
 		for ev: EventData in _current_map.events:
 			if ev.erased:
 				events_erased.append(ev.id)
+	var inventory_out: Dictionary = {}
+	for id in GameState.inventory:
+		inventory_out[str(id)] = GameState.inventory[id]
+	var equip_inventory_out: Dictionary = {}
+	for id in GameState.equip_inventory:
+		equip_inventory_out[str(id)] = GameState.equip_inventory[id]
+	var party_out: Array = []
+	for m in GameState.party:
+		var stats: Dictionary = GameState.get_member_stats(int(m["actor_id"]))
+		party_out.append({
+			"actor_id": m["actor_id"],
+			"name": m["name"],
+			"hp": m["hp"],
+			"max_hp": int(stats.get("max_hp", 0)),
+			"mp": m["mp"],
+			"max_mp": int(stats.get("max_mp", 0)),
+			"stats": stats,
+			"equipment": (m["equipment"] as Dictionary).duplicate(),
+		})
 	return {
 		"map_id": _current_map.id if _current_map else -1,
 		"map_name": _current_map.map_name if _current_map else "",
@@ -250,6 +269,10 @@ func get_snapshot() -> Dictionary:
 		"events_erased": events_erased,
 		"switches_on": switches,
 		"variables": variables,
+		"gold": GameState.gold,
+		"inventory": inventory_out,
+		"equip_inventory": equip_inventory_out,
+		"party": party_out,
 	}
 
 
