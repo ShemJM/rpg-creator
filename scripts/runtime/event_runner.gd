@@ -5,9 +5,15 @@ extends Node
 
 signal finished()
 
-var _commands: Array = []
-var _page_commands: Array = []  # Original page command list — jump targets survive branch splicing.
-var _index: int = 0
+## Execution is a stack of frames so nested blocks compose correctly. Each
+## frame is { "commands": Array, "index": int, "kind": String } where kind is
+## "root" (the event page), "branch" (a conditional / battle-result block),
+## "loop" (repeats its body until BREAK_LOOP), or "call" (a common event).
+## The top frame is the one currently executing; when it runs off its end it
+## either repeats (loop) or pops back to its parent (everything else).
+const MAX_FRAME_DEPTH: int = 64  # Guards against runaway common-event recursion.
+
+var _frames: Array = []
 var _waiting: bool = false
 var _event: EventData = null
 var _stopped: bool = false
@@ -24,9 +30,7 @@ func run_event(event: EventData) -> void:
 	if page == null:
 		finished.emit()
 		return
-	_commands = page.commands
-	_page_commands = page.commands
-	_index = 0
+	_frames = [_make_frame(page.commands, "root")]
 	_waiting = false
 	_stopped = false
 	var map_id: int = -1
@@ -38,16 +42,41 @@ func run_event(event: EventData) -> void:
 	_execute_next()
 
 
+func _make_frame(commands: Array, kind: String) -> Dictionary:
+	return { "commands": commands, "index": 0, "kind": kind }
+
+
+## Push a nested block (branch / loop body / common-event call) so it runs to
+## completion before the parent frame resumes.
+func _push_frame(commands: Array, kind: String) -> void:
+	if _frames.size() >= MAX_FRAME_DEPTH:
+		push_error("[ER] Max nesting depth reached (%d) — skipping %s block (recursion?)." % [MAX_FRAME_DEPTH, kind])
+		return
+	_frames.append(_make_frame(commands, kind))
+
+
 func _execute_next() -> void:
 	if _stopped:
 		return
-	if _index >= _commands.size():
-		SignalBus.trace_event_finished.emit(_event.event_name if _event else "", _event.id if _event else -1)
-		finished.emit()
+	while not _frames.is_empty():
+		var frame: Dictionary = _frames[_frames.size() - 1]
+		if frame["index"] >= frame["commands"].size():
+			if frame["kind"] == "loop":
+				# Repeat the body. Defer so a tight loop yields a frame instead
+				# of recursing the call stack.
+				frame["index"] = 0
+				_execute_next.call_deferred()
+				return
+			_frames.pop_back()
+			if _frames.is_empty():
+				SignalBus.trace_event_finished.emit(_event.event_name if _event else "", _event.id if _event else -1)
+				finished.emit()
+				return
+			continue  # Resume the parent frame (its index already advanced).
+		var cmd: EventCommand = frame["commands"][frame["index"]]
+		frame["index"] += 1
+		_execute_command(cmd)
 		return
-	var cmd: EventCommand = _commands[_index]
-	_index += 1
-	_execute_command(cmd)
 
 
 func _execute_command(cmd: EventCommand) -> void:
@@ -236,9 +265,7 @@ func _on_battle_finished(result: String, params: Dictionary) -> void:
 				return
 	# "flee" (or an empty win branch) just continues past the command.
 	if branch.size() > 0:
-		var remaining := _commands.slice(_index)
-		_commands = branch + remaining
-		_index = 0
+		_push_frame(branch, "branch")
 	_execute_next()
 
 
@@ -283,11 +310,9 @@ func _cmd_conditional_branch(params: Dictionary) -> void:
 	else:
 		branch_cmds = params.get("commands_else", [])
 
-	# Execute the branch inline, then continue with the rest.
+	# Run the chosen branch as a nested frame, then resume the parent.
 	if branch_cmds.size() > 0:
-		var remaining := _commands.slice(_index)
-		_commands = branch_cmds + remaining
-		_index = 0
+		_push_frame(branch_cmds, "branch")
 	_execute_next()
 
 
@@ -342,20 +367,19 @@ func _cmd_erase_event() -> void:
 
 func _cmd_jump_to_label(params: Dictionary) -> void:
 	var target: String = params.get("name", "")
-	# Look in the active execution list first, then fall back to the page's
-	# original commands (a branch splice replaces _commands, which would
-	# otherwise hide page-level labels from jumps inside branches).
-	var idx := _find_label(_commands, target)
-	if idx < 0:
-		idx = _find_label(_page_commands, target)
+	# Search from the current frame outward so a jump inside a branch/loop can
+	# target a label in an enclosing block (e.g. a page-level loop label). The
+	# frames above the match are abandoned.
+	for i in range(_frames.size() - 1, -1, -1):
+		var idx := _find_label(_frames[i]["commands"], target)
 		if idx >= 0:
-			_commands = _page_commands
-	if idx >= 0:
-		_index = idx + 1
-		# Defer so a backwards jump can't recurse the stack into oblivion;
-		# tight loops advance at most once per idle frame.
-		_execute_next.call_deferred()
-		return
+			while _frames.size() > i + 1:
+				_frames.pop_back()
+			_frames[i]["index"] = idx + 1
+			# Defer so a backwards jump can't recurse the stack into oblivion;
+			# tight loops advance at most once per idle frame.
+			_execute_next.call_deferred()
+			return
 	# No matching label — continue past the jump.
 	push_warning("[ER] JUMP_TO_LABEL: no label named '%s'" % target)
 	_execute_next()
