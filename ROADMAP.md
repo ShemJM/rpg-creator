@@ -84,16 +84,17 @@ Commands that round out the scripting system:
 
 ---
 
-## Phase 7 — Battle System (optional / stretch)
+## Phase 7 — Battle System ✓ (v1 subset)
 
-If the project grows to include a full RPG loop:
-
+- [x] Party, gold, inventory, equipment live at runtime (schema v5 `system` block; commands 16–20)
+- [x] Shops — `SHOP_PROCESSING` + scriptable buy/sell session
+- [x] Turn-based battle with party vs. enemies (`BattleManager`, deterministic seeded damage)
+- [x] `BATTLE_PROCESSING` event command with win/lose command branches
+- [x] Win/lose conditions wired back to the event system (lose without a branch = game over)
+- [x] Enemies database table with gold/item rewards
 - [ ] Encounter zones — tile flag triggers a random battle
-- [ ] Turn-based battle scene with party vs. enemies
-- [ ] Character stats resource (`HP`, `MP`, `ATK`, `DEF`, `SPD`)
-- [ ] Skills and items as resources
-- [ ] `BATTLE_PROCESSING` event command — start a scripted battle
-- [ ] Win/lose conditions wired back to the event system
+- [ ] Skills / troops / drop chances / level growth / CHANGE_PARTY
+- [ ] Editor UI for the v5 commands and enemies table
 
 ---
 

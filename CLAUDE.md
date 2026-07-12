@@ -12,7 +12,7 @@ rpg-creator is an RPG Maker-style tool built in **Godot 4.6 / GDScript**. Humans
 
 Setup: `make setup` resolves or downloads a Godot 4.6 binary into `bin/godot` (a SessionStart hook does this automatically in Claude Code web sessions; it needs network access to `github.com/godotengine`, or set `$GODOT` to an existing binary). There is no build step — GDScript is interpreted.
 
-Canonical worked example: `games/lost_crystal.rpgm` + `games/lost_crystal_scenario.json`.
+Canonical worked examples: `games/lost_crystal.rpgm` (dialogue/switch adventure) and `games/adventure_demo.rpgc` (full RPG loop: quest → shop → equip → boss battle with a mid-fight item → transfer), each with a passing `*_scenario.json`.
 
 ## Headless CLI
 

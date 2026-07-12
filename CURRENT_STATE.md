@@ -37,6 +37,9 @@
 - **Game over** — `GAME_OVER` ends the play-test immediately.
 - **Parallel events** — pages with the Parallel trigger run in their own runner without blocking the player, looping while their conditions hold.
 - **Page re-evaluation** — event pages re-evaluate when switches, variables, or self-switches change; visuals update, parallel runners start/stop, and autorun pages fire when they *become* active (edge-triggered).
+- **Party & resources** — starting party from the `system` block, live HP/MP, gold, item/equipment stock, equipment slots that modify effective stats; commands `CHANGE_GOLD`, `CHANGE_ITEMS`, `CHANGE_HP`, `CHANGE_EQUIPMENT`, `USE_ITEM`; branch conditions `gold_gte` / `has_item`.
+- **Shops** — `SHOP_PROCESSING` opens a buy/sell session (database or override prices, half-price sells) that blocks the event until closed; fully scriptable headlessly.
+- **Battle v1** — `BATTLE_PROCESSING` runs a deterministic turn-based fight (agi order, ±10% seeded damage variance, enemy AI, items and fleeing, win/lose command branches, gold + item rewards). Managed by `BattleManager` with a minimal reactive `BattleUI`.
 
 ### Infrastructure
 
@@ -55,8 +58,8 @@
 ## Known gaps / rough edges
 
 - **`PLAY_SE` is a stub** — advances immediately with no audio playback (no BGM/SE yet).
-- **Database is authoring-only** — actors/classes/items/weapons/armor are stored but not yet consumed at runtime (party, inventory, shops, and combat come in later phases). No skills/enemies/troops yet.
-- **No party / inventory / combat** — `GameState` still holds only switches/variables; no party, gold, inventory, or battle system yet.
+- **Party is fixed at play-test start** — no CHANGE_PARTY command yet; class stats are authoring-only (no level growth); no skills, no random encounter zones, no troops table (BATTLE_PROCESSING takes inline enemy ids); item effects are HP/MP restore only.
+- **No editor UI yet for the v5 systems** — the party/shop/battle commands and enemies table are authorable via JSON (agents) but not yet in the event editor panel / database panel.
 - **Map transfer UX** — Transfer Player command works at runtime but there is no editor UI for picking the target map by name.
 - **Parallel events + dialogue** — a parallel event showing text while a blocking event also waits on dialogue can cross-talk; parallel pages are best used for switch/variable/wait/move logic.
 - **No undo/redo** in the editor.
