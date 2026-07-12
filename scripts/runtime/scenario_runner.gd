@@ -75,6 +75,12 @@ func setup(runtime: RuntimePlayer, is_headless: bool = false) -> void:
 		_trace.append({ "type": "equip_changed", "actor_id": actor_id, "slot": slot, "equip_id": equip_id }))
 	SignalBus.trace_item_used.connect(func(item_id: int, actor_id: int, ok: bool) -> void:
 		_trace.append({ "type": "item_used", "item_id": item_id, "actor_id": actor_id, "ok": ok }))
+	SignalBus.trace_shop_opened.connect(func(entries: Array) -> void:
+		_trace.append({ "type": "shop_opened", "entries": entries.duplicate(true) }))
+	SignalBus.trace_shop_transaction.connect(func(action: String, kind: String, id: int, count: int, gold_delta: int, ok: bool) -> void:
+		_trace.append({ "type": "shop_transaction", "action": action, "kind": kind, "id": id, "count": count, "gold_delta": gold_delta, "ok": ok }))
+	SignalBus.trace_shop_closed.connect(func() -> void:
+		_trace.append({ "type": "shop_closed" }))
 
 
 func run_from_file(path: String) -> void:
@@ -173,6 +179,21 @@ func _process_next_step() -> void:
 		"choose":
 			var index: int = step.get("index", 0)
 			_runtime.scripted_make_choice(index)
+			await get_tree().process_frame
+			_process_next_step()
+
+		"shop_buy":
+			SignalBus.scripted_shop_buy.emit(int(step.get("index", 0)), int(step.get("count", 1)))
+			await get_tree().process_frame
+			_process_next_step()
+
+		"shop_sell":
+			SignalBus.scripted_shop_sell.emit(str(step.get("kind", "item")), int(step.get("id", 0)), int(step.get("count", 1)))
+			await get_tree().process_frame
+			_process_next_step()
+
+		"shop_close":
+			SignalBus.scripted_shop_close.emit()
 			await get_tree().process_frame
 			_process_next_step()
 
@@ -335,6 +356,15 @@ func _process_next_step() -> void:
 					not ah_member.is_empty() and ah_actual == ah_expected,
 					"expect_actor_hp[%d] == %d : got %d" % [ah_id, ah_expected, ah_actual]
 				)
+			_process_next_step()
+
+		"expect_shop_open":
+			var so_expected: bool = step.get("value", true)
+			var so_actual: bool = _runtime.get_snapshot().get("shop_open", false)
+			_record_assertion(
+				so_actual == so_expected,
+				"expect_shop_open == %s : got %s" % [str(so_expected), str(so_actual)]
+			)
 			_process_next_step()
 
 		"expect_actor_stat":

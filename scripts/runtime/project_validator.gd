@@ -30,6 +30,7 @@ const SCENARIO_ACTIONS := [
 	"expect_event_erased", "expect_event_running", "expect_game_over",
 	"expect_gold", "expect_item_count", "expect_party_size",
 	"expect_actor_hp", "expect_actor_stat",
+	"shop_buy", "shop_sell", "shop_close", "expect_shop_open",
 	"snapshot",
 ]
 const DIRECTIONS := ["up", "down", "left", "right"]
@@ -380,6 +381,22 @@ static func _validate_params(errors: Array, ctype: int, params: Dictionary, cpat
 			if not ctx["actor_ids"].has(_as_int(params.get("actor_id", -1))):
 				_err(errors, "%s.params.actor_id" % cpath, "unknown actor id: %s" % str(params.get("actor_id")))
 
+		EventCommand.Type.SHOP_PROCESSING:
+			var shop_entries: Variant = params.get("entries", null)
+			if not shop_entries is Array or (shop_entries as Array).is_empty():
+				_err(errors, "%s.params.entries" % cpath, "SHOP_PROCESSING needs a non-empty \"entries\" array")
+			else:
+				for s in range((shop_entries as Array).size()):
+					var se: Variant = shop_entries[s]
+					var se_path := "%s.params.entries[%d]" % [cpath, s]
+					if not se is Dictionary:
+						_err(errors, se_path, "entry must be an object { kind, id, price? }")
+						continue
+					_check_stock_ref(errors, se, se_path, ctx)
+					var se_price: Variant = (se as Dictionary).get("price", 0)
+					if not _is_int(se_price) or _as_int(se_price) < 0:
+						_err(errors, "%s.price" % se_path, "price must be a non-negative integer")
+
 
 ## Validate a {kind: "item"|"equip", id} reference against the database.
 static func _check_stock_ref(errors: Array, params: Dictionary, path: String, ctx: Dictionary) -> void:
@@ -487,6 +504,12 @@ static func validate_scenario(data: Dictionary) -> Array:
 					_err(errors, spath, "expect_actor_stat needs integer \"actor_id\" and \"value\"")
 				if not STAT_KEYS.has(str(step.get("stat", ""))):
 					_err(errors, "%s.stat" % spath, "stat must be one of %s" % str(STAT_KEYS))
+			"shop_buy":
+				if not _is_int(step.get("index", null)):
+					_err(errors, "%s.index" % spath, "shop_buy needs an integer \"index\" into the shop entries")
+			"shop_sell":
+				if not STOCK_KINDS.has(str(step.get("kind", "item"))) or not _is_int(step.get("id", null)):
+					_err(errors, spath, "shop_sell needs kind item|equip and an integer \"id\"")
 	if not has_assertion:
 		_err(errors, "steps", "scenario has no expect_* assertions — it can never fail")
 	return errors

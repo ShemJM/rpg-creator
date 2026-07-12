@@ -9,6 +9,7 @@ const MOVE_ROUTE_STEP_SECONDS: float = 0.15
 var _player: CharacterBody2D = null
 var _event_runner: EventRunner = null
 var _dialogue_box: DialogueBox = null
+var _shop_ui: ShopUI = null
 var _current_map: MapData = null
 var _event_running: bool = false
 var _last_player_grid: Vector2i = Vector2i(-1, -1)
@@ -38,6 +39,9 @@ func _ready() -> void:
 
 	_dialogue_box = DialogueBox.new()
 	add_child(_dialogue_box)
+
+	_shop_ui = ShopUI.new()
+	add_child(_shop_ui)
 
 	SignalBus.transfer_requested.connect(_on_transfer)
 	SignalBus.fade_requested.connect(_on_fade_requested)
@@ -273,6 +277,8 @@ func get_snapshot() -> Dictionary:
 		"inventory": inventory_out,
 		"equip_inventory": equip_inventory_out,
 		"party": party_out,
+		"shop_open": _shop_ui.is_open if _shop_ui else false,
+		"shop_entries": _shop_ui.entries.duplicate(true) if _shop_ui and _shop_ui.is_open else [],
 	}
 
 
@@ -355,9 +361,9 @@ func _on_transfer(map_id: int, x: int, y: int) -> void:
 	_event_visuals.clear()
 	_last_active_pages.clear()
 	_pending_autoruns.clear()
-	# Clear current map visuals.
+	# Clear current map visuals (persistent runtime services survive).
 	for child in get_children():
-		if child != _event_runner and child != _dialogue_box and child != _fade_layer:
+		if child != _event_runner and child != _dialogue_box and child != _fade_layer and child != _shop_ui:
 			child.queue_free()
 	_current_map = target_map
 	_build_map(_current_map)

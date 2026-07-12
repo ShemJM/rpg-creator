@@ -111,6 +111,8 @@ func _execute_command(cmd: EventCommand) -> void:
 		EventCommand.Type.USE_ITEM:
 			GameState.use_item(int(cmd.params.get("item_id", 0)), int(cmd.params.get("actor_id", 0)))
 			_execute_next()
+		EventCommand.Type.SHOP_PROCESSING:
+			_cmd_shop_processing(cmd.params)
 		_:
 			_execute_next()
 
@@ -193,6 +195,20 @@ func _cmd_control_variables(params: Dictionary) -> void:
 	for id: int in ids:
 		GameState.modify_variable(id, op, value)
 		SignalBus.trace_variable_changed.emit(id, GameState.get_variable(id))
+
+
+func _cmd_shop_processing(params: Dictionary) -> void:
+	var entries: Array = params.get("entries", [])
+	_waiting = true
+	# ShopUI owns the session (buy/sell/close, scripted or clicked) and emits
+	# shop_finished when it closes — the dialogue wait/resume pattern.
+	SignalBus.shop_finished.connect(_on_shop_finished, CONNECT_ONE_SHOT)
+	SignalBus.shop_requested.emit(entries)
+
+
+func _on_shop_finished() -> void:
+	_waiting = false
+	_execute_next()
 
 
 func _cmd_change_hp(params: Dictionary) -> void:

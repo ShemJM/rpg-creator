@@ -110,6 +110,7 @@ Written/read by `ProjectState.serialize()/deserialize()` (`scripts/autoloads/pro
 | 18 | CHANGE_HP | `{ "actor_id": -1 (whole party) \| id, "op": "add"\|"sub"\|"set", "value": 20, "allow_ko": false }` — without `allow_ko` HP floors at 1; with it, a full party wipe triggers game over |
 | 19 | CHANGE_EQUIPMENT | `{ "actor_id": 0, "slot": "weapon"\|"head"\|"body"\|"accessory", "equip_id": 3 }` — `-1` unequips; equipping consumes the piece from equip stock (grant it with CHANGE_ITEMS `kind:"equip"` first), unequipping returns it |
 | 20 | USE_ITEM | `{ "item_id": 0, "actor_id": 0 }` — applies the item's `effect` `{"hp": n, "mp": n}` restore; consumables decrement; no-op (traced `ok:false`) if out of stock |
+| 21 | SHOP_PROCESSING | `{ "entries": [ { "kind": "item"\|"equip", "id": 0, "price": 30 } ] }` — `price` optional (defaults to database price); sell price = floor(db price / 2); **blocks the event until the shop closes** — drive it with the `shop_buy`/`shop_sell`/`shop_close` scenario actions |
 
 Follow-up branching after SHOW_CHOICES: the chosen index is written to **variable 0** — branch with CONDITIONAL_BRANCH on `condition_type: "variable"`. There are **100 switches and 100 variables** (ids 0–99), reset each play-test. Self-switches are per-event letters A–D.
 
@@ -150,10 +151,16 @@ Runtime party rules:
     { "action": "expect_party_size", "value": 1 },
     { "action": "expect_actor_hp", "actor_id": 0, "value": 90 },
     { "action": "expect_actor_stat", "actor_id": 0, "stat": "atk", "value": 17 },
+    { "action": "shop_buy", "index": 0, "count": 1 },
+    { "action": "shop_sell", "kind": "item", "id": 0, "count": 1 },
+    { "action": "shop_close" },
+    { "action": "expect_shop_open", "value": false },
     { "action": "snapshot" }
   ]
 }
 ```
+
+Shop flow: `interact` with the shop event → `advance_dialogue` past any greeting → the shop opens (`expect_shop_open`) → `shop_buy` (index into the SHOP_PROCESSING entries) / `shop_sell` (any stocked item, half price) → `shop_close` resumes the event. A rejected buy (not enough gold) changes nothing and is traced with `ok: false`.
 
 Optional top-level `"rng_seed"` (int): gameplay randomness flows through one seeded RNG (`GameState.rng`, default seed 0), so runs are always reproducible — set `rng_seed` only to explore alternate outcomes. `expect_actor_hp` also accepts `"gte"` instead of `"value"`.
 

@@ -26,6 +26,7 @@ enum Type {
 	CHANGE_HP,
 	CHANGE_EQUIPMENT,
 	USE_ITEM,
+	SHOP_PROCESSING,
 }
 
 @export var type: Type = Type.SHOW_TEXT
@@ -59,6 +60,9 @@ enum Type {
 ## CHANGE_EQUIPMENT: { "actor_id": 0, "slot": "weapon"|"head"|"body"|"accessory",
 ##                     "equip_id": 3 } — -1 unequips; equipping consumes from stock.
 ## USE_ITEM: { "item_id": 0, "actor_id": 0 } — applies effect {"hp","mp"}; consumables decrement.
+## SHOP_PROCESSING: { "entries": [ { "kind": "item"|"equip", "id": 0, "price": 30 } ] }
+##   price optional (defaults to the database price); sell price = floor(price / 2).
+##   Blocks the event until the shop closes.
 @export var params: Dictionary = {}
 
 
@@ -205,4 +209,11 @@ static func make_use_item(item_id: int, actor_id: int) -> EventCommand:
 	var cmd := EventCommand.new()
 	cmd.type = Type.USE_ITEM
 	cmd.params = { "item_id": item_id, "actor_id": actor_id }
+	return cmd
+
+
+static func make_shop_processing(entries: Array) -> EventCommand:
+	var cmd := EventCommand.new()
+	cmd.type = Type.SHOP_PROCESSING
+	cmd.params = { "entries": entries }
 	return cmd
