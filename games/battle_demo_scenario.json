@@ -1,0 +1,50 @@
+{
+	"project": "games/battle_demo.rpgc",
+	"start_map_id": 0,
+	"steps": [
+		{ "action": "wait_frames", "count": 5 },
+		{ "action": "expect_gold", "value": 10 },
+		{ "action": "expect_battle_active", "value": false },
+
+		{ "action": "move", "direction": "right", "times": 1 },
+		{ "action": "move", "direction": "left", "times": 1 },
+		{ "action": "interact" },
+		{ "action": "wait_frames", "count": 10 },
+		{ "action": "expect_dialogue", "contains": "wild slime" },
+		{ "action": "advance_dialogue" },
+		{ "action": "wait_frames", "count": 10 },
+		{ "action": "expect_battle_active", "value": true },
+
+		{ "action": "battle_flee" },
+		{ "action": "wait_frames", "count": 10 },
+		{ "action": "expect_battle_active", "value": false },
+		{ "action": "expect_battle_result", "value": "flee" },
+		{ "action": "expect_event_running", "value": false },
+
+		{ "action": "interact" },
+		{ "action": "wait_frames", "count": 10 },
+		{ "action": "advance_dialogue" },
+		{ "action": "wait_frames", "count": 10 },
+		{ "action": "expect_battle_active", "value": true },
+
+		{ "action": "battle_attack", "target": 0 },
+		{ "action": "wait_frames", "count": 5 },
+		{ "action": "expect_battle_active", "value": true },
+		{ "action": "expect_enemy_hp", "index": 0, "lte": 10 },
+		{ "action": "expect_actor_hp", "actor_id": 0, "gte": 78 },
+
+		{ "action": "battle_attack", "target": 0 },
+		{ "action": "wait_frames", "count": 10 },
+		{ "action": "expect_battle_active", "value": false },
+		{ "action": "expect_battle_result", "value": "win" },
+		{ "action": "expect_gold", "value": 40 },
+		{ "action": "expect_item_count", "kind": "item", "id": 0, "value": 1 },
+		{ "action": "expect_switch", "id": 10, "value": true },
+		{ "action": "expect_dialogue", "contains": "Victory" },
+		{ "action": "advance_dialogue" },
+		{ "action": "wait_frames", "count": 10 },
+		{ "action": "expect_event_erased", "id": 0, "value": true },
+		{ "action": "expect_event_running", "value": false },
+		{ "action": "snapshot" }
+	]
+}

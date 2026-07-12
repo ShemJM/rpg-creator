@@ -27,6 +27,7 @@ enum Type {
 	CHANGE_EQUIPMENT,
 	USE_ITEM,
 	SHOP_PROCESSING,
+	BATTLE_PROCESSING,
 }
 
 @export var type: Type = Type.SHOW_TEXT
@@ -63,6 +64,10 @@ enum Type {
 ## SHOP_PROCESSING: { "entries": [ { "kind": "item"|"equip", "id": 0, "price": 30 } ] }
 ##   price optional (defaults to the database price); sell price = floor(price / 2).
 ##   Blocks the event until the shop closes.
+## BATTLE_PROCESSING: { "enemies": [enemy_id, ...], "can_flee": true,
+##                      "commands_win": [EventCommand...], "commands_lose": [EventCommand...] }
+##   Blocks until the battle ends. win -> commands_win; lose -> commands_lose,
+##   or game over when commands_lose is empty; flee -> continue past the command.
 @export var params: Dictionary = {}
 
 
@@ -216,4 +221,11 @@ static func make_shop_processing(entries: Array) -> EventCommand:
 	var cmd := EventCommand.new()
 	cmd.type = Type.SHOP_PROCESSING
 	cmd.params = { "entries": entries }
+	return cmd
+
+
+static func make_battle_processing(enemy_ids: Array, can_flee: bool = true) -> EventCommand:
+	var cmd := EventCommand.new()
+	cmd.type = Type.BATTLE_PROCESSING
+	cmd.params = { "enemies": enemy_ids, "can_flee": can_flee, "commands_win": [], "commands_lose": [] }
 	return cmd

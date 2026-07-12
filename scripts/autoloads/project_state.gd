@@ -16,6 +16,7 @@ var actors: Array[ActorData] = []
 var classes: Array[ClassData] = []
 var items: Array[ItemData] = []
 var equipment: Array[EquipData] = []  ## weapons + armor, distinguished by EquipData.kind
+var enemies: Array[EnemyData] = []
 
 ## Project-level runtime settings (serialized as top-level "system"):
 ## { "starting_party": [actor_id, ...], "starting_gold": int }
@@ -301,6 +302,21 @@ func add_equip(equip_name: String = "New Equipment", kind: String = EquipData.KI
 	return e
 
 
+func add_enemy(enemy_name: String = "New Enemy") -> EnemyData:
+	var e := EnemyData.new()
+	e.id = _next_id(enemies)
+	e.enemy_name = enemy_name
+	enemies.append(e)
+	return e
+
+
+func get_enemy_by_id(enemy_id: int) -> EnemyData:
+	for e in enemies:
+		if e.id == enemy_id:
+			return e
+	return null
+
+
 func get_actor_by_id(actor_id: int) -> ActorData:
 	for a in actors:
 		if a.id == actor_id:
@@ -345,6 +361,7 @@ func database_summary() -> Dictionary:
 		"items": _summary_entries(items, "item_name"),
 		"weapons": _summary_entries(equipment.filter(func(e): return e.kind == EquipData.KIND_WEAPON), "equip_name"),
 		"armor": _summary_entries(equipment.filter(func(e): return e.kind == EquipData.KIND_ARMOR), "equip_name"),
+		"enemies": _summary_entries(enemies, "enemy_name"),
 	}
 
 
@@ -431,6 +448,7 @@ func serialize() -> Dictionary:
 			"classes": _dicts(classes),
 			"items": _dicts(items),
 			"equipment": _dicts(equipment),
+			"enemies": _dicts(enemies),
 		},
 	}
 
@@ -494,6 +512,7 @@ func _deserialize_database(db: Dictionary) -> void:
 	classes.clear()
 	items.clear()
 	equipment.clear()
+	enemies.clear()
 	for d in db.get("actors", []):
 		actors.append(ActorData.from_dict(d))
 	for d in db.get("classes", []):
@@ -502,6 +521,8 @@ func _deserialize_database(db: Dictionary) -> void:
 		items.append(ItemData.from_dict(d))
 	for d in db.get("equipment", []):
 		equipment.append(EquipData.from_dict(d))
+	for d in db.get("enemies", []):
+		enemies.append(EnemyData.from_dict(d))
 
 
 func _serialize_map(map: MapData) -> Dictionary:
@@ -556,12 +577,15 @@ func _serialize_page(page: EventPage) -> Dictionary:
 	}
 
 
+## Param keys that nest sub-command arrays (CONDITIONAL_BRANCH, BATTLE_PROCESSING).
+const _BRANCH_KEYS: Array[String] = ["commands_if", "commands_else", "commands_win", "commands_lose"]
+
+
 func _serialize_command(cmd: EventCommand) -> Dictionary:
 	var params: Dictionary = cmd.params.duplicate(true)
-	if params.has("commands_if"):
-		params["commands_if"] = _serialize_command_array(params["commands_if"])
-	if params.has("commands_else"):
-		params["commands_else"] = _serialize_command_array(params["commands_else"])
+	for key in _BRANCH_KEYS:
+		if params.has(key):
+			params[key] = _serialize_command_array(params[key])
 	return { "type": EventCommand.Type.keys()[cmd.type], "params": params }
 
 
@@ -643,10 +667,9 @@ func _deserialize_command(data: Dictionary) -> EventCommand:
 	else:
 		cmd.type = int(raw_type) as EventCommand.Type
 	var params: Dictionary = data.get("params", {}).duplicate(true)
-	if params.has("commands_if"):
-		params["commands_if"] = _deserialize_command_array(params["commands_if"])
-	if params.has("commands_else"):
-		params["commands_else"] = _deserialize_command_array(params["commands_else"])
+	for key in _BRANCH_KEYS:
+		if params.has(key):
+			params[key] = _deserialize_command_array(params[key])
 	cmd.params = params
 	return cmd
 

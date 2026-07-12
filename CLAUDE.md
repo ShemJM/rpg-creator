@@ -111,12 +111,13 @@ Written/read by `ProjectState.serialize()/deserialize()` (`scripts/autoloads/pro
 | 19 | CHANGE_EQUIPMENT | `{ "actor_id": 0, "slot": "weapon"\|"head"\|"body"\|"accessory", "equip_id": 3 }` — `-1` unequips; equipping consumes the piece from equip stock (grant it with CHANGE_ITEMS `kind:"equip"` first), unequipping returns it |
 | 20 | USE_ITEM | `{ "item_id": 0, "actor_id": 0 }` — applies the item's `effect` `{"hp": n, "mp": n}` restore; consumables decrement; no-op (traced `ok:false`) if out of stock |
 | 21 | SHOP_PROCESSING | `{ "entries": [ { "kind": "item"\|"equip", "id": 0, "price": 30 } ] }` — `price` optional (defaults to database price); sell price = floor(db price / 2); **blocks the event until the shop closes** — drive it with the `shop_buy`/`shop_sell`/`shop_close` scenario actions |
+| 22 | BATTLE_PROCESSING | `{ "enemies": [enemy_id, ...], "can_flee": true, "commands_win": [...], "commands_lose": [...] }` — blocks until the battle ends; `win` splices `commands_win`, `lose` splices `commands_lose` (**empty `commands_lose` = game over**), `flee` continues past the command |
 
 Follow-up branching after SHOW_CHOICES: the chosen index is written to **variable 0** — branch with CONDITIONAL_BRANCH on `condition_type: "variable"`. There are **100 switches and 100 variables** (ids 0–99), reset each play-test. Self-switches are per-event letters A–D.
 
 ### Database & party (live at runtime since v5)
 
-`actors` (`actor_name`, `class_id`, `initial_level`, `stats`, `graphic`, `note`), `classes` (`class_name`, `stats`, `note`), `items` (`item_name`, `description`, `price`, `consumable`, `effect`: `{"hp": n, "mp": n}` restore), `equipment` (`equip_name`, `kind`: `"weapon"`/`"armor"`, `slot`: `"weapon"|"head"|"body"|"accessory"`, `price`, `stat_mods`, `note`). `stats`/`stat_mods` is a flat block: `max_hp, max_mp, atk, def, mat, mdf, agi, luk`. Database ids: unique, conventionally max+1.
+`actors` (`actor_name`, `class_id`, `initial_level`, `stats`, `graphic`, `note`), `classes` (`class_name`, `stats`, `note`), `items` (`item_name`, `description`, `price`, `consumable`, `effect`: `{"hp": n, "mp": n}` restore), `equipment` (`equip_name`, `kind`: `"weapon"`/`"armor"`, `slot`: `"weapon"|"head"|"body"|"accessory"`, `price`, `stat_mods`, `note`), `enemies` (`enemy_name`, `stats`, `gold_reward`, `item_rewards`: `[{kind, id, count}]` — deterministic, no drop chances). `stats`/`stat_mods` is a flat block: `max_hp, max_mp, atk, def, mat, mdf, agi, luk`. Database ids: unique, conventionally max+1.
 
 Runtime party rules:
 
@@ -161,6 +162,15 @@ Runtime party rules:
 ```
 
 Shop flow: `interact` with the shop event → `advance_dialogue` past any greeting → the shop opens (`expect_shop_open`) → `shop_buy` (index into the SHOP_PROCESSING entries) / `shop_sell` (any stocked item, half price) → `shop_close` resumes the event. A rejected buy (not enough gold) changes nothing and is traced with `ok: false`.
+
+### Battle (deterministic — design scenarios around these exact rules)
+
+- Party fights with **live HP** (battle damage persists after the battle). Each round waits for one command per living party member in party order — supply them with `battle_attack {"target": enemy_index}`, `battle_item {"item_id", "target_actor_id"?}` (consumes the turn), or `battle_flee` — then resolves synchronously.
+- Turn order: `agi` descending; ties → party before enemies, then lower index. Enemy AI: basic attack on the lowest-index living party member. A dead attack target retargets to the first living one.
+- **Damage** = `max(1, base * rng(90..110) / 100)` where `base = max(1, atk - def / 2)` (integer division). That rng roll is the only randomness (seed 0 unless the scenario sets `rng_seed`), so damage varies ±10% — bound assertions with `expect_enemy_hp {"index", "lte"}` / `expect_actor_hp {"gte"}`, or design HP totals so the outcome is variance-proof (e.g. 20 HP enemy vs 10–13 damage = always exactly 2 hits).
+- `battle_flee` succeeds iff `can_flee` (a failed attempt wastes the turn). Win grants every enemy's `gold_reward` + `item_rewards`.
+- Assertions: `expect_battle_active {value}`, `expect_battle_result {value: "win"|"lose"|"flee"}` (persists after the battle), `expect_enemy_hp {index, value|lte}`. Snapshot carries `battle: {active, round, pending_actor_id, enemies, last_result}`; the trace logs `battle_started/round/action/ended` with per-action damage.
+- Worked examples: `games/battle_demo.rpgc` with `battle_demo_scenario.json` (flee, then a 2-round win) and `battle_lose_scenario.json` (unwinnable → game over).
 
 Optional top-level `"rng_seed"` (int): gameplay randomness flows through one seeded RNG (`GameState.rng`, default seed 0), so runs are always reproducible — set `rng_seed` only to explore alternate outcomes. `expect_actor_hp` also accepts `"gte"` instead of `"value"`.
 

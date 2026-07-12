@@ -31,6 +31,8 @@ const SCENARIO_ACTIONS := [
 	"expect_gold", "expect_item_count", "expect_party_size",
 	"expect_actor_hp", "expect_actor_stat",
 	"shop_buy", "shop_sell", "shop_close", "expect_shop_open",
+	"battle_attack", "battle_item", "battle_flee",
+	"expect_battle_active", "expect_battle_result", "expect_enemy_hp",
 	"snapshot",
 ]
 const DIRECTIONS := ["up", "down", "left", "right"]
@@ -89,6 +91,7 @@ static func validate_project(data: Dictionary) -> Array:
 		"actor_ids": _collect_ids(db, "actors"),
 		"item_ids": _collect_ids(db, "items"),
 		"equip_ids": _collect_ids(db, "equipment"),
+		"enemy_ids": _collect_ids(db, "enemies"),
 	}
 
 	for i in range(maps.size()):
@@ -228,7 +231,7 @@ static func _collect_labels(commands: Array, labels: Dictionary) -> void:
 			continue
 		if _canonical_enum((c as Dictionary).get("type", null), EventCommand.Type) == EventCommand.Type.LABEL:
 			labels[str((params as Dictionary).get("name", ""))] = true
-		for branch in ["commands_if", "commands_else"]:
+		for branch in ["commands_if", "commands_else", "commands_win", "commands_lose"]:
 			if (params as Dictionary).get(branch, null) is Array:
 				_collect_labels(params[branch], labels)
 
@@ -381,6 +384,21 @@ static func _validate_params(errors: Array, ctype: int, params: Dictionary, cpat
 			if not ctx["actor_ids"].has(_as_int(params.get("actor_id", -1))):
 				_err(errors, "%s.params.actor_id" % cpath, "unknown actor id: %s" % str(params.get("actor_id")))
 
+		EventCommand.Type.BATTLE_PROCESSING:
+			var bp_enemies: Variant = params.get("enemies", null)
+			if not bp_enemies is Array or (bp_enemies as Array).is_empty():
+				_err(errors, "%s.params.enemies" % cpath, "BATTLE_PROCESSING needs a non-empty \"enemies\" array of enemy ids")
+			else:
+				for b in range((bp_enemies as Array).size()):
+					if not _is_int(bp_enemies[b]) or not ctx["enemy_ids"].has(_as_int(bp_enemies[b])):
+						_err(errors, "%s.params.enemies[%d]" % [cpath, b], "unknown enemy id: %s" % str(bp_enemies[b]))
+			for branch in ["commands_win", "commands_lose"]:
+				var bp_sub: Variant = params.get(branch, [])
+				if bp_sub is Array:
+					_validate_commands(errors, bp_sub, "%s.params.%s" % [cpath, branch], ctx, labels)
+				else:
+					_err(errors, "%s.params.%s" % [cpath, branch], "must be an array of commands")
+
 		EventCommand.Type.SHOP_PROCESSING:
 			var shop_entries: Variant = params.get("entries", null)
 			if not shop_entries is Array or (shop_entries as Array).is_empty():
@@ -440,6 +458,34 @@ static func _validate_database(errors: Array, db: Dictionary) -> void:
 			var e: Variant = equipment[i]
 			if e is Dictionary and not ["weapon", "armor"].has(str((e as Dictionary).get("kind", "weapon"))):
 				_err(errors, "database.equipment[%d].kind" % i, "kind must be \"weapon\" or \"armor\"")
+	var enemies: Variant = db.get("enemies", [])
+	if enemies is Array:
+		var item_ids := _collect_ids(db, "items")
+		var equip_ids := _collect_ids(db, "equipment")
+		for i in range((enemies as Array).size()):
+			var en: Variant = enemies[i]
+			if not en is Dictionary:
+				_err(errors, "database.enemies[%d]" % i, "enemy must be an object")
+				continue
+			var rewards: Variant = (en as Dictionary).get("item_rewards", [])
+			if not rewards is Array:
+				_err(errors, "database.enemies[%d].item_rewards" % i, "must be an array")
+				continue
+			for r in range((rewards as Array).size()):
+				var reward: Variant = rewards[r]
+				var rpath := "database.enemies[%d].item_rewards[%d]" % [i, r]
+				if not reward is Dictionary:
+					_err(errors, rpath, "reward must be { kind, id, count }")
+					continue
+				var rkind: String = str((reward as Dictionary).get("kind", "item"))
+				var rid: Variant = (reward as Dictionary).get("id", null)
+				var rids: Dictionary = equip_ids if rkind == "equip" else item_ids
+				if not STOCK_KINDS.has(rkind):
+					_err(errors, "%s.kind" % rpath, "kind must be one of %s" % str(STOCK_KINDS))
+				elif not _is_int(rid) or not rids.has(_as_int(rid)):
+					_err(errors, "%s.id" % rpath, "unknown %s id: %s" % [rkind, str(rid)])
+	elif enemies != null:
+		_err(errors, "database.enemies", "must be an array")
 
 
 # ---------------------------------------------------------------------------
@@ -510,6 +556,17 @@ static func validate_scenario(data: Dictionary) -> Array:
 			"shop_sell":
 				if not STOCK_KINDS.has(str(step.get("kind", "item"))) or not _is_int(step.get("id", null)):
 					_err(errors, spath, "shop_sell needs kind item|equip and an integer \"id\"")
+			"battle_item":
+				if not _is_int(step.get("item_id", null)):
+					_err(errors, "%s.item_id" % spath, "battle_item needs an integer \"item_id\"")
+			"expect_battle_result":
+				if not ["win", "lose", "flee"].has(str(step.get("value", ""))):
+					_err(errors, "%s.value" % spath, "expect_battle_result value must be win|lose|flee")
+			"expect_enemy_hp":
+				if not _is_int(step.get("index", null)):
+					_err(errors, "%s.index" % spath, "expect_enemy_hp needs an integer \"index\"")
+				if not _is_int(step.get("value", null)) and not _is_int(step.get("lte", null)):
+					_err(errors, spath, "expect_enemy_hp needs an integer \"value\" or \"lte\"")
 	if not has_assertion:
 		_err(errors, "steps", "scenario has no expect_* assertions — it can never fail")
 	return errors

@@ -81,6 +81,14 @@ func setup(runtime: RuntimePlayer, is_headless: bool = false) -> void:
 		_trace.append({ "type": "shop_transaction", "action": action, "kind": kind, "id": id, "count": count, "gold_delta": gold_delta, "ok": ok }))
 	SignalBus.trace_shop_closed.connect(func() -> void:
 		_trace.append({ "type": "shop_closed" }))
+	SignalBus.trace_battle_started.connect(func(enemy_ids: Array) -> void:
+		_trace.append({ "type": "battle_started", "enemy_ids": enemy_ids.duplicate() }))
+	SignalBus.trace_battle_round.connect(func(n: int) -> void:
+		_trace.append({ "type": "battle_round", "round": n }))
+	SignalBus.trace_battle_action.connect(func(actor: String, action: String, target: String, amount: int, hp_left: int) -> void:
+		_trace.append({ "type": "battle_action", "actor": actor, "action": action, "target": target, "amount": amount, "target_hp_left": hp_left }))
+	SignalBus.trace_battle_ended.connect(func(result: String, gold_reward: int, item_rewards: Array) -> void:
+		_trace.append({ "type": "battle_ended", "result": result, "gold_reward": gold_reward, "item_rewards": item_rewards.duplicate(true) }))
 
 
 func run_from_file(path: String) -> void:
@@ -194,6 +202,24 @@ func _process_next_step() -> void:
 
 		"shop_close":
 			SignalBus.scripted_shop_close.emit()
+			await get_tree().process_frame
+			_process_next_step()
+
+		"battle_attack":
+			SignalBus.scripted_battle_action.emit("attack", { "target": int(step.get("target", 0)) })
+			await get_tree().process_frame
+			_process_next_step()
+
+		"battle_item":
+			var bi_params: Dictionary = { "item_id": int(step.get("item_id", 0)) }
+			if step.has("target_actor_id"):
+				bi_params["target_actor_id"] = int(step["target_actor_id"])
+			SignalBus.scripted_battle_action.emit("item", bi_params)
+			await get_tree().process_frame
+			_process_next_step()
+
+		"battle_flee":
+			SignalBus.scripted_battle_action.emit("flee", {})
 			await get_tree().process_frame
 			_process_next_step()
 
@@ -355,6 +381,44 @@ func _process_next_step() -> void:
 				_record_assertion(
 					not ah_member.is_empty() and ah_actual == ah_expected,
 					"expect_actor_hp[%d] == %d : got %d" % [ah_id, ah_expected, ah_actual]
+				)
+			_process_next_step()
+
+		"expect_battle_active":
+			var ba_expected: bool = step.get("value", true)
+			var ba_actual: bool = _runtime.get_snapshot().get("battle", {}).get("active", false)
+			_record_assertion(
+				ba_actual == ba_expected,
+				"expect_battle_active == %s : got %s" % [str(ba_expected), str(ba_actual)]
+			)
+			_process_next_step()
+
+		"expect_battle_result":
+			var br_expected: String = str(step.get("value", "win"))
+			var br_actual: String = str(_runtime.get_snapshot().get("battle", {}).get("last_result", ""))
+			_record_assertion(
+				br_actual == br_expected,
+				"expect_battle_result == \"%s\" : got \"%s\"" % [br_expected, br_actual]
+			)
+			_process_next_step()
+
+		"expect_enemy_hp":
+			var eh_index: int = int(step.get("index", 0))
+			var eh_enemies: Array = _runtime.get_snapshot().get("battle", {}).get("enemies", [])
+			var eh_actual: int = -1
+			if eh_index >= 0 and eh_index < eh_enemies.size():
+				eh_actual = int(eh_enemies[eh_index].get("hp", -1))
+			if step.has("lte"):
+				var eh_max: int = int(step["lte"])
+				_record_assertion(
+					eh_actual >= 0 and eh_actual <= eh_max,
+					"expect_enemy_hp[%d] <= %d : got %d" % [eh_index, eh_max, eh_actual]
+				)
+			else:
+				var eh_expected: int = int(step.get("value", 0))
+				_record_assertion(
+					eh_actual == eh_expected,
+					"expect_enemy_hp[%d] == %d : got %d" % [eh_index, eh_expected, eh_actual]
 				)
 			_process_next_step()
 

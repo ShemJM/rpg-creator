@@ -25,6 +25,12 @@
 			"name": "Mage"
 		}
 	],
+	"enemies": [
+		{
+			"id": 0,
+			"name": "Cave Slime"
+		}
+	],
 	"items": [
 		{
 			"id": 0,

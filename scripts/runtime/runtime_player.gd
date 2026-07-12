@@ -10,6 +10,8 @@ var _player: CharacterBody2D = null
 var _event_runner: EventRunner = null
 var _dialogue_box: DialogueBox = null
 var _shop_ui: ShopUI = null
+var _battle_manager: BattleManager = null
+var _battle_ui: BattleUI = null
 var _current_map: MapData = null
 var _event_running: bool = false
 var _last_player_grid: Vector2i = Vector2i(-1, -1)
@@ -42,6 +44,13 @@ func _ready() -> void:
 
 	_shop_ui = ShopUI.new()
 	add_child(_shop_ui)
+
+	_battle_manager = BattleManager.new()
+	add_child(_battle_manager)
+
+	_battle_ui = BattleUI.new()
+	_battle_ui.manager = _battle_manager
+	add_child(_battle_ui)
 
 	SignalBus.transfer_requested.connect(_on_transfer)
 	SignalBus.fade_requested.connect(_on_fade_requested)
@@ -279,6 +288,13 @@ func get_snapshot() -> Dictionary:
 		"party": party_out,
 		"shop_open": _shop_ui.is_open if _shop_ui else false,
 		"shop_entries": _shop_ui.entries.duplicate(true) if _shop_ui and _shop_ui.is_open else [],
+		"battle": {
+			"active": _battle_manager.active if _battle_manager else false,
+			"round": _battle_manager.round_number if _battle_manager else 0,
+			"pending_actor_id": _battle_manager.pending_actor_id if _battle_manager else -1,
+			"enemies": _battle_manager.enemies.duplicate(true) if _battle_manager else [],
+			"last_result": _battle_manager.last_result if _battle_manager else "",
+		},
 	}
 
 
@@ -362,8 +378,9 @@ func _on_transfer(map_id: int, x: int, y: int) -> void:
 	_last_active_pages.clear()
 	_pending_autoruns.clear()
 	# Clear current map visuals (persistent runtime services survive).
+	var persistent: Array = [_event_runner, _dialogue_box, _fade_layer, _shop_ui, _battle_manager, _battle_ui]
 	for child in get_children():
-		if child != _event_runner and child != _dialogue_box and child != _fade_layer and child != _shop_ui:
+		if not persistent.has(child):
 			child.queue_free()
 	_current_map = target_map
 	_build_map(_current_map)

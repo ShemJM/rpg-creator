@@ -113,6 +113,8 @@ func _execute_command(cmd: EventCommand) -> void:
 			_execute_next()
 		EventCommand.Type.SHOP_PROCESSING:
 			_cmd_shop_processing(cmd.params)
+		EventCommand.Type.BATTLE_PROCESSING:
+			_cmd_battle_processing(cmd.params)
 		_:
 			_execute_next()
 
@@ -208,6 +210,35 @@ func _cmd_shop_processing(params: Dictionary) -> void:
 
 func _on_shop_finished() -> void:
 	_waiting = false
+	_execute_next()
+
+
+func _cmd_battle_processing(params: Dictionary) -> void:
+	var enemy_ids: Array = params.get("enemies", [])
+	var can_flee: bool = bool(params.get("can_flee", true))
+	_waiting = true
+	SignalBus.battle_finished.connect(_on_battle_finished.bind(params), CONNECT_ONE_SHOT)
+	SignalBus.battle_requested.emit(enemy_ids, can_flee)
+
+
+func _on_battle_finished(result: String, params: Dictionary) -> void:
+	_waiting = false
+	var branch: Array = []
+	match result:
+		"win":
+			branch = params.get("commands_win", [])
+		"lose":
+			branch = params.get("commands_lose", [])
+			if branch.is_empty():
+				# RPG Maker convention: a lost battle without a lose branch
+				# ends the game.
+				_cmd_game_over()
+				return
+	# "flee" (or an empty win branch) just continues past the command.
+	if branch.size() > 0:
+		var remaining := _commands.slice(_index)
+		_commands = branch + remaining
+		_index = 0
 	_execute_next()
 
 
