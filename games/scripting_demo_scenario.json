@@ -1,0 +1,27 @@
+{
+	"project": "games/scripting_demo.rpgc",
+	"start_map_id": 0,
+	"rng_seed": 7,
+	"steps": [
+		{ "action": "wait_frames", "count": 5 },
+		{ "action": "expect_position", "map_id": 0, "x": 5, "y": 4 },
+		{ "action": "expect_gold", "value": 0 },
+
+		{ "action": "move", "direction": "up", "times": 1 },
+		{ "action": "expect_position", "map_id": 0, "x": 5, "y": 3 },
+		{ "action": "expect_player_facing", "x": 0, "y": -1 },
+		{ "action": "interact" },
+		{ "action": "wait_frames", "count": 120 },
+		{ "action": "expect_dialogue", "contains": "oracle speaks" },
+		{ "action": "advance_dialogue" },
+		{ "action": "wait_frames", "count": 10 },
+
+		{ "action": "expect_switch", "id": 22, "value": true },
+		{ "action": "expect_switch", "id": 23, "value": true },
+		{ "action": "expect_gold", "value": 100 },
+		{ "action": "expect_switch", "id": 20, "value": true },
+		{ "action": "expect_switch", "id": 21, "value": true },
+		{ "action": "expect_event_running", "value": false },
+		{ "action": "snapshot" }
+	]
+}

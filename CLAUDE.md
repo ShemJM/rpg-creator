@@ -93,8 +93,8 @@ Written/read by `ProjectState.serialize()/deserialize()` (`scripts/autoloads/pro
 | 0 | SHOW_TEXT | `{ "lines": ["..."], "name": "Speaker" }` |
 | 1 | SHOW_CHOICES | `{ "choices": ["Yes","No"], "cancel_index": -1 }` |
 | 2 | CONTROL_SWITCHES | `{ "ids": [1], "value": true }` |
-| 3 | CONTROL_VARIABLES | `{ "ids": [2], "op": "set"\|"add"\|"sub"\|"mul"\|"div", "value": 5 }` |
-| 4 | CONDITIONAL_BRANCH | `{ "condition_type": "switch"\|"variable_gte"\|"self_switch"\|"gold_gte"\|"has_item", "id": 1, "value": true, "commands_if": [...], "commands_else": [...] }` — `switch`: `value` bool; `variable_gte`: variable[id] ≥ value; `self_switch`: `value` is the letter; `gold_gte`: gold ≥ value; `has_item`: `{ "kind": "item"\|"equip", "id": n, "value": min count }` |
+| 3 | CONTROL_VARIABLES | `{ "ids": [2], "op": "set"\|"add"\|"sub"\|"mul"\|"div", ...operand }` — operand is `"constant" {value}` (default), `"variable" {value: src_id}`, `"random" {min,max}` (seeded), or `"game_data" {data,...}` (see below) |
+| 4 | CONDITIONAL_BRANCH | `{ "condition_type": ..., "id": 1, "value": true, "commands_if": [...], "commands_else": [...] }` — types: `switch` (`value` bool); `variable` (`{compare: "eq"\|"ne"\|"gte"\|"lte"\|"gt"\|"lt", ...operand}`, compares variable[id] to the operand); `variable_gte` (legacy: variable[id] ≥ value); `self_switch` (`value` = letter); `gold_gte` (gold ≥ value); `has_item` (`{kind, id, value: min count}`) |
 | 5 | TRANSFER_PLAYER | `{ "map_id": 1, "x": 5, "y": 7 }` |
 | 6 | SET_SELF_SWITCH | `{ "letter": "A", "value": true }` |
 | 7 | WAIT | `{ "frames": 60 }` |
@@ -114,6 +114,12 @@ Written/read by `ProjectState.serialize()/deserialize()` (`scripts/autoloads/pro
 | 21 | SHOP_PROCESSING | `{ "entries": [ { "kind": "item"\|"equip", "id": 0, "price": 30 } ] }` — `price` optional (defaults to database price); sell price = floor(db price / 2); **blocks the event until the shop closes** — drive it with the `shop_buy`/`shop_sell`/`shop_close` scenario actions |
 | 22 | BATTLE_PROCESSING | `{ "enemies": [enemy_id, ...], "can_flee": true, "commands_win": [...], "commands_lose": [...] }` — blocks until the battle ends; `win` splices `commands_win`, `lose` splices `commands_lose` (**empty `commands_lose` = game over**), `flee` continues past the command |
 | 23 | CALL_COMMON_EVENT | `{ "id": 0 }` — runs the referenced common event's commands inline (reusable subroutine), then resumes; blocks if the common event has blocking commands |
+| 24 | LOOP | `{ "commands": [...] }` — repeats the body until a BREAK_LOOP runs inside it (guard against infinite loops with a variable/switch check + BREAK_LOOP) |
+| 25 | BREAK_LOOP | `{}` — exits the nearest enclosing LOOP |
+
+**Variable operands** (CONTROL_VARIABLES, and CONDITIONAL_BRANCH `variable`): `"constant"` `{value}`; `"variable"` `{value: source_var_id}`; `"random"` `{min, max}` (one draw per command via the seeded RNG); `"game_data"` `{data: "gold"\|"party_size"\|"item_count"(+kind,id)\|"actor_hp"(+actor_id)\|"actor_mp"(+actor_id)\|"actor_stat"(+actor_id,stat)}`. Omitting `operand` means a bare constant in `value`.
+
+Loops: `LOOP`/`BREAK_LOOP` is the ergonomic form; `LABEL`+`JUMP_TO_LABEL` still works for gotos. Both compose with branches on the frame-stack interpreter.
 
 Follow-up branching after SHOW_CHOICES: the chosen index is written to **variable 0** — branch with CONDITIONAL_BRANCH on `condition_type: "variable"`. There are **100 switches and 100 variables** (ids 0–99), reset each play-test. Self-switches are per-event letters A–D.
 

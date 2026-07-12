@@ -156,6 +156,13 @@ func _execute_command(cmd: EventCommand) -> void:
 			_cmd_battle_processing(cmd.params)
 		EventCommand.Type.CALL_COMMON_EVENT:
 			_cmd_call_common_event(cmd.params)
+		EventCommand.Type.LOOP:
+			var body: Array = cmd.params.get("commands", [])
+			if body.size() > 0:
+				_push_frame(body, "loop")
+			_execute_next()
+		EventCommand.Type.BREAK_LOOP:
+			_cmd_break_loop()
 		_:
 			_execute_next()
 
@@ -234,10 +241,58 @@ func _cmd_control_switches(params: Dictionary) -> void:
 func _cmd_control_variables(params: Dictionary) -> void:
 	var ids: Array = params.get("ids", [])
 	var op: String = params.get("op", "set")
-	var value: int = params.get("value", 0)
+	# Resolve the operand once per command (a "random" operand draws a single
+	# value shared across all target ids, keeping runs reproducible).
+	var value: int = _resolve_operand(params)
 	for id: int in ids:
 		GameState.modify_variable(id, op, value)
 		SignalBus.trace_variable_changed.emit(id, GameState.get_variable(id))
+
+
+## Resolve a CONTROL_VARIABLES / CONDITIONAL_BRANCH operand to an int. No
+## "operand" key means a bare constant in "value" (back-compatible).
+func _resolve_operand(params: Dictionary) -> int:
+	match str(params.get("operand", "constant")):
+		"variable":
+			return GameState.get_variable(int(params.get("value", 0)))
+		"random":
+			var lo: int = int(params.get("min", 0))
+			var hi: int = int(params.get("max", 0))
+			if hi < lo:
+				hi = lo
+			return GameState.rng.randi_range(lo, hi)
+		"game_data":
+			return _resolve_game_data(params)
+		_:
+			return int(params.get("value", 0))
+
+
+func _resolve_game_data(params: Dictionary) -> int:
+	match str(params.get("data", "")):
+		"gold":
+			return GameState.gold
+		"party_size":
+			return GameState.party.size()
+		"item_count":
+			return GameState.get_stock(str(params.get("kind", "item")), int(params.get("id", 0)))
+		"actor_hp":
+			return int(GameState.get_member(int(params.get("actor_id", 0))).get("hp", 0))
+		"actor_mp":
+			return int(GameState.get_member(int(params.get("actor_id", 0))).get("mp", 0))
+		"actor_stat":
+			return int(GameState.get_member_stats(int(params.get("actor_id", 0))).get(str(params.get("stat", "atk")), 0))
+	return 0
+
+
+func _cmd_break_loop() -> void:
+	# Unwind frames up to and including the nearest loop; if there is no
+	# enclosing loop this is a harmless no-op.
+	while not _frames.is_empty():
+		var kind: String = _frames[_frames.size() - 1]["kind"]
+		_frames.pop_back()
+		if kind == "loop":
+			break
+	_execute_next()
 
 
 func _cmd_shop_processing(params: Dictionary) -> void:
@@ -320,6 +375,9 @@ func _cmd_conditional_branch(params: Dictionary) -> void:
 			condition_met = GameState.get_switch(id) == value
 		"variable_gte":
 			condition_met = GameState.get_variable(id) >= int(value)
+		"variable":
+			# variable[id] <compare> operand (constant or another variable).
+			condition_met = _compare_ints(GameState.get_variable(id), _resolve_operand(params), str(params.get("compare", "eq")))
 		"self_switch":
 			var letter: String = str(value)
 			condition_met = _event.self_switches.get(letter, false)
@@ -340,6 +398,17 @@ func _cmd_conditional_branch(params: Dictionary) -> void:
 	if branch_cmds.size() > 0:
 		_push_frame(branch_cmds, "branch")
 	_execute_next()
+
+
+func _compare_ints(a: int, b: int, cmp: String) -> bool:
+	match cmp:
+		"eq": return a == b
+		"ne": return a != b
+		"gte": return a >= b
+		"lte": return a <= b
+		"gt": return a > b
+		"lt": return a < b
+	return false
 
 
 func _cmd_transfer_player(params: Dictionary) -> void:

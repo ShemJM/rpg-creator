@@ -29,6 +29,8 @@ enum Type {
 	SHOP_PROCESSING,
 	BATTLE_PROCESSING,
 	CALL_COMMON_EVENT,
+	LOOP,
+	BREAK_LOOP,
 }
 
 @export var type: Type = Type.SHOW_TEXT
@@ -36,7 +38,10 @@ enum Type {
 ## SHOW_TEXT: { "lines": ["..."], "face": "", "name": "" }
 ## SHOW_CHOICES: { "choices": ["A", "B"], "cancel_index": -1 }
 ## CONTROL_SWITCHES: { "ids": [0], "value": true }
-## CONTROL_VARIABLES: { "ids": [0], "op": "set", "value": 0 }
+## CONTROL_VARIABLES: { "ids": [0], "op": "set"|"add"|"sub"|"mul"|"div",
+##   plus an operand: "constant" { "value": n } (default) |
+##   "variable" { "value": src_var_id } | "random" { "min": a, "max": b } |
+##   "game_data" { "data": "gold"|"party_size"|"item_count"|"actor_hp"|"actor_mp"|"actor_stat", ... } }
 ## CONDITIONAL_BRANCH: { "condition_type": "switch", "id": 0, "value": true,
 ##                       "commands_if": [EventCommand...], "commands_else": [EventCommand...] }
 ## TRANSFER_PLAYER: { "map_id": 0, "x": 0, "y": 0 }
@@ -71,6 +76,8 @@ enum Type {
 ##   or game over when commands_lose is empty; flee -> continue past the command.
 ## CALL_COMMON_EVENT: { "id": 0 } — runs the common event's commands inline,
 ##   then resumes; shares the caller's self-switch context.
+## LOOP: { "commands": [EventCommand...] } — repeats the body until BREAK_LOOP.
+## BREAK_LOOP: {} — exits the nearest enclosing LOOP.
 @export var params: Dictionary = {}
 
 
@@ -238,4 +245,18 @@ static func make_call_common_event(id: int) -> EventCommand:
 	var cmd := EventCommand.new()
 	cmd.type = Type.CALL_COMMON_EVENT
 	cmd.params = { "id": id }
+	return cmd
+
+
+static func make_loop(commands: Array = []) -> EventCommand:
+	var cmd := EventCommand.new()
+	cmd.type = Type.LOOP
+	cmd.params = { "commands": commands }
+	return cmd
+
+
+static func make_break_loop() -> EventCommand:
+	var cmd := EventCommand.new()
+	cmd.type = Type.BREAK_LOOP
+	cmd.params = {}
 	return cmd

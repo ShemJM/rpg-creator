@@ -14,7 +14,10 @@ const MAX_VARIABLES := 100
 const SELF_SWITCH_LETTERS := ["A", "B", "C", "D"]
 const VARIABLE_OPS := ["set", "add", "sub", "mul", "div"]
 const RESOURCE_OPS := ["set", "add", "sub"]
-const CONDITION_TYPES := ["switch", "variable_gte", "self_switch", "gold_gte", "has_item"]
+const CONDITION_TYPES := ["switch", "variable_gte", "variable", "self_switch", "gold_gte", "has_item"]
+const COMPARE_OPS := ["eq", "ne", "gte", "lte", "gt", "lt"]
+const OPERAND_TYPES := ["constant", "variable", "random", "game_data"]
+const GAME_DATA := ["gold", "party_size", "item_count", "actor_hp", "actor_mp", "actor_stat"]
 const STOCK_KINDS := ["item", "equip"]
 const EQUIP_SLOTS := ["weapon", "head", "body", "accessory"]
 const STAT_KEYS := ["max_hp", "max_mp", "atk", "def", "mat", "mdf", "agi", "luk"]
@@ -275,7 +278,7 @@ static func _collect_labels(commands: Array, labels: Dictionary) -> void:
 			continue
 		if _canonical_enum((c as Dictionary).get("type", null), EventCommand.Type) == EventCommand.Type.LABEL:
 			labels[str((params as Dictionary).get("name", ""))] = true
-		for branch in ["commands_if", "commands_else", "commands_win", "commands_lose"]:
+		for branch in ["commands_if", "commands_else", "commands_win", "commands_lose", "commands"]:
 			if (params as Dictionary).get(branch, null) is Array:
 				_collect_labels(params[branch], labels)
 
@@ -319,8 +322,7 @@ static func _validate_params(errors: Array, ctype: int, params: Dictionary, cpat
 			var op: String = str(params.get("op", "set"))
 			if not VARIABLE_OPS.has(op):
 				_err(errors, "%s.params.op" % cpath, "op must be one of %s, got \"%s\"" % [str(VARIABLE_OPS), op])
-			if not _is_number(params.get("value", 0)):
-				_err(errors, "%s.params.value" % cpath, "value must be a number")
+			_check_operand(errors, params, "%s.params" % cpath, ctx)
 
 		EventCommand.Type.CONDITIONAL_BRANCH:
 			var cond: String = str(params.get("condition_type", "switch"))
@@ -333,6 +335,13 @@ static func _validate_params(errors: Array, ctype: int, params: Dictionary, cpat
 					_err(errors, "%s.params.value" % cpath, "gold_gte condition needs an integer value")
 			elif cond == "has_item":
 				_check_stock_ref(errors, params, "%s.params" % cpath, ctx)
+			elif cond == "variable":
+				var vid: int = _as_int(params.get("id", 0))
+				if vid < 0 or vid >= MAX_VARIABLES:
+					_err(errors, "%s.params.id" % cpath, "variable id out of range (0..%d): %d" % [MAX_VARIABLES - 1, vid])
+				if not COMPARE_OPS.has(str(params.get("compare", "eq"))):
+					_err(errors, "%s.params.compare" % cpath, "compare must be one of %s" % str(COMPARE_OPS))
+				_check_operand(errors, params, "%s.params" % cpath, ctx)
 			elif cond == "switch" or cond == "variable_gte":
 				var id: int = _as_int(params.get("id", 0))
 				var limit: int = MAX_SWITCHES if cond == "switch" else MAX_VARIABLES
@@ -432,6 +441,13 @@ static func _validate_params(errors: Array, ctype: int, params: Dictionary, cpat
 			if not ctx["common_event_ids"].has(_as_int(params.get("id", -1))):
 				_err(errors, "%s.params.id" % cpath, "unknown common event id: %s" % str(params.get("id")))
 
+		EventCommand.Type.LOOP:
+			var loop_body: Variant = params.get("commands", null)
+			if not loop_body is Array or (loop_body as Array).is_empty():
+				_err(errors, "%s.params.commands" % cpath, "LOOP needs a non-empty \"commands\" array (use BREAK_LOOP to exit)")
+			else:
+				_validate_commands(errors, loop_body, "%s.params.commands" % cpath, ctx, labels)
+
 		EventCommand.Type.BATTLE_PROCESSING:
 			var bp_enemies: Variant = params.get("enemies", null)
 			if not bp_enemies is Array or (bp_enemies as Array).is_empty():
@@ -462,6 +478,36 @@ static func _validate_params(errors: Array, ctype: int, params: Dictionary, cpat
 					var se_price: Variant = (se as Dictionary).get("price", 0)
 					if not _is_int(se_price) or _as_int(se_price) < 0:
 						_err(errors, "%s.price" % se_path, "price must be a non-negative integer")
+
+
+## Validate a CONTROL_VARIABLES / variable-condition operand.
+static func _check_operand(errors: Array, params: Dictionary, path: String, ctx: Dictionary) -> void:
+	var operand: String = str(params.get("operand", "constant"))
+	if not OPERAND_TYPES.has(operand):
+		_err(errors, "%s.operand" % path, "operand must be one of %s" % str(OPERAND_TYPES))
+		return
+	match operand:
+		"constant", "variable":
+			if not _is_int(params.get("value", null)):
+				_err(errors, "%s.value" % path, "%s operand needs an integer \"value\"" % operand)
+			elif operand == "variable":
+				var v: int = _as_int(params.get("value", 0))
+				if v < 0 or v >= MAX_VARIABLES:
+					_err(errors, "%s.value" % path, "source variable id out of range (0..%d)" % (MAX_VARIABLES - 1))
+		"random":
+			if not _is_int(params.get("min", null)) or not _is_int(params.get("max", null)):
+				_err(errors, "%s" % path, "random operand needs integer \"min\" and \"max\"")
+		"game_data":
+			var data: String = str(params.get("data", ""))
+			if not GAME_DATA.has(data):
+				_err(errors, "%s.data" % path, "game_data \"data\" must be one of %s" % str(GAME_DATA))
+			elif data == "item_count":
+				_check_stock_ref(errors, params, path, ctx)
+			elif data in ["actor_hp", "actor_mp", "actor_stat"]:
+				if not ctx["actor_ids"].has(_as_int(params.get("actor_id", -1))):
+					_err(errors, "%s.actor_id" % path, "unknown actor id: %s" % str(params.get("actor_id")))
+				if data == "actor_stat" and not STAT_KEYS.has(str(params.get("stat", ""))):
+					_err(errors, "%s.stat" % path, "stat must be one of %s" % str(STAT_KEYS))
 
 
 ## Validate a {kind: "item"|"equip", id} reference against the database.

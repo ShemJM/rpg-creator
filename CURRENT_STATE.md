@@ -40,6 +40,7 @@
 - **Party & resources** — starting party from the `system` block, live HP/MP, gold, item/equipment stock, equipment slots that modify effective stats; commands `CHANGE_GOLD`, `CHANGE_ITEMS`, `CHANGE_HP`, `CHANGE_EQUIPMENT`, `USE_ITEM`; branch conditions `gold_gte` / `has_item`.
 - **Shops** — `SHOP_PROCESSING` opens a buy/sell session (database or override prices, half-price sells) that blocks the event until closed; fully scriptable headlessly.
 - **Battle v1** — `BATTLE_PROCESSING` runs a deterministic turn-based fight (agi order, ±10% seeded damage variance, enemy AI, items and fleeing, win/lose command branches, gold + item rewards). Managed by `BattleManager` with a minimal reactive `BattleUI`.
+- **Advanced scripting** — the event interpreter is a frame stack, so nested branches, loops, and calls compose correctly. `CALL_COMMON_EVENT` invokes reusable command lists (top-level `common_events`, callable / autorun / parallel). `LOOP`/`BREAK_LOOP` are first-class. `CONTROL_VARIABLES` and `CONDITIONAL_BRANCH` take operands (constant / variable / seeded random / game-data like gold, item count, actor HP/stat) and full comparison operators. No arbitrary-code "Script" command — everything stays typed, validatable, and deterministic.
 
 ### Infrastructure
 

@@ -632,8 +632,8 @@ func _serialize_page(page: EventPage) -> Dictionary:
 	}
 
 
-## Param keys that nest sub-command arrays (CONDITIONAL_BRANCH, BATTLE_PROCESSING).
-const _BRANCH_KEYS: Array[String] = ["commands_if", "commands_else", "commands_win", "commands_lose"]
+## Param keys that nest sub-command arrays (CONDITIONAL_BRANCH, BATTLE_PROCESSING, LOOP).
+const _BRANCH_KEYS: Array[String] = ["commands_if", "commands_else", "commands_win", "commands_lose", "commands"]
 
 
 func _serialize_command(cmd: EventCommand) -> Dictionary:

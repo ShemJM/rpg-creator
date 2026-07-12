@@ -98,6 +98,18 @@ Commands that round out the scripting system:
 
 ---
 
+## Phase 7.5 — Advanced Scripting ✓
+
+- [x] Frame-stack event interpreter (nested branches / loops / calls compose)
+- [x] Common Events — reusable command lists (call / autorun / parallel), schema v6
+- [x] `CALL_COMMON_EVENT`, `LOOP`, `BREAK_LOOP` commands
+- [x] Data-driven variables (constant / variable / seeded random / game-data operands)
+- [x] Full comparison operators on variable conditions
+- [ ] Player-input commands (`INPUT_NUMBER`, `SELECT_ITEM`) — deferred (player-facing)
+- [ ] Deliberately no raw "Script" (arbitrary-code) command — breaks validation/determinism/sandbox
+
+---
+
 ## Phase 8 — Export
 
 - [ ] Package a project as a standalone Godot `.pck` (runtime-only, no editor)
