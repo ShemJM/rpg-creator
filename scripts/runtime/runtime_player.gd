@@ -176,12 +176,13 @@ func scripted_move(direction: String) -> void:
 		"down":  dir_vec = Vector2i( 0,  1)
 		_:       return
 	var target := current_grid + dir_vec
-	# Bounds check.
-	if target.x < 0 or target.x >= _current_map.width or \
-	   target.y < 0 or target.y >= _current_map.height:
-		return
-	# Update facing direction.
+	# Update facing direction even when the step is blocked, matching a real
+	# walk attempt (lets scripted runs face-and-interact across walls).
 	(_player as PlayerCharacter).facing_direction = dir_vec
+	# Respect tile passability like manual play — physics collision doesn't
+	# apply to scripted teleport-steps, so check the grid directly.
+	if not _is_cell_passable(target):
+		return
 	# Teleport directly to target cell (top-left corner; grid calc uses int/CELL_SIZE).
 	_player.position = Vector2(target) * CELL_SIZE + Vector2(CELL_SIZE / 2.0, CELL_SIZE / 2.0)
 	# Emit trace immediately and sync _last_player_grid so _physics_process

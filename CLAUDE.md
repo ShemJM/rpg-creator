@@ -77,7 +77,7 @@ Written/read by `ProjectState.serialize()/deserialize()` (`scripts/autoloads/pro
 }
 ```
 
-- Event `id` must be unique within its map. Events sit on the map grid; an event with commands blocks movement onto its tile for Action Button triggers.
+- Event `id` must be unique within its map. **Events never block movement** — only impassable tiles do. `interact` targets the tile the player is *facing* and works even if that tile is impassable, so the door-on-a-wall pattern (event placed on a wall tile, player interacts facing it) is the way to gate progress. A blocked `move` step still turns the player to face that direction.
 - `trigger`: `"ACTION_BUTTON"` (player presses interact while facing it), `"PLAYER_TOUCH"`, `"AUTORUN"` (fires when page becomes active), `"PARALLEL"` (loops in background). Legacy integer ordinals (0–3) also load.
 - Page conditions all default to "none" (`-1` / `""`). The **last** page whose conditions hold is the active one. `condition_variable_gte` means variable ≥ value.
 - `graphic_color` is a float RGBA array (0–1).
