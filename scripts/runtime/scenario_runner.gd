@@ -63,6 +63,32 @@ func setup(runtime: RuntimePlayer, is_headless: bool = false) -> void:
 	SignalBus.trace_assertion_failed.connect(_on_trace_assertion_failed)
 	SignalBus.trace_self_switch_changed.connect(_on_trace_self_switch)
 	SignalBus.trace_game_over.connect(_on_trace_game_over)
+	SignalBus.trace_gold_changed.connect(func(g: int, d: int) -> void:
+		_trace.append({ "type": "gold_changed", "gold": g, "delta": d }))
+	SignalBus.trace_item_changed.connect(func(kind: String, id: int, count: int) -> void:
+		_trace.append({ "type": "item_changed", "kind": kind, "id": id, "count": count }))
+	SignalBus.trace_hp_changed.connect(func(actor_id: int, hp: int, max_hp: int) -> void:
+		_trace.append({ "type": "hp_changed", "actor_id": actor_id, "hp": hp, "max_hp": max_hp }))
+	SignalBus.trace_mp_changed.connect(func(actor_id: int, mp: int, max_mp: int) -> void:
+		_trace.append({ "type": "mp_changed", "actor_id": actor_id, "mp": mp, "max_mp": max_mp }))
+	SignalBus.trace_equip_changed.connect(func(actor_id: int, slot: String, equip_id: int) -> void:
+		_trace.append({ "type": "equip_changed", "actor_id": actor_id, "slot": slot, "equip_id": equip_id }))
+	SignalBus.trace_item_used.connect(func(item_id: int, actor_id: int, ok: bool) -> void:
+		_trace.append({ "type": "item_used", "item_id": item_id, "actor_id": actor_id, "ok": ok }))
+	SignalBus.trace_shop_opened.connect(func(entries: Array) -> void:
+		_trace.append({ "type": "shop_opened", "entries": entries.duplicate(true) }))
+	SignalBus.trace_shop_transaction.connect(func(action: String, kind: String, id: int, count: int, gold_delta: int, ok: bool) -> void:
+		_trace.append({ "type": "shop_transaction", "action": action, "kind": kind, "id": id, "count": count, "gold_delta": gold_delta, "ok": ok }))
+	SignalBus.trace_shop_closed.connect(func() -> void:
+		_trace.append({ "type": "shop_closed" }))
+	SignalBus.trace_battle_started.connect(func(enemy_ids: Array) -> void:
+		_trace.append({ "type": "battle_started", "enemy_ids": enemy_ids.duplicate() }))
+	SignalBus.trace_battle_round.connect(func(n: int) -> void:
+		_trace.append({ "type": "battle_round", "round": n }))
+	SignalBus.trace_battle_action.connect(func(actor: String, action: String, target: String, amount: int, hp_left: int) -> void:
+		_trace.append({ "type": "battle_action", "actor": actor, "action": action, "target": target, "amount": amount, "target_hp_left": hp_left }))
+	SignalBus.trace_battle_ended.connect(func(result: String, gold_reward: int, item_rewards: Array) -> void:
+		_trace.append({ "type": "battle_ended", "result": result, "gold_reward": gold_reward, "item_rewards": item_rewards.duplicate(true) }))
 
 
 func run_from_file(path: String) -> void:
@@ -101,6 +127,11 @@ func run_from_dict(data: Dictionary) -> void:
 			if ProjectState.maps[i].id == start_map_id:
 				ProjectState.select_map(i)
 				break
+
+	# Deterministic runs: GameState.reset() seeds rng with a constant; an
+	# explicit scenario seed overrides it here (before any steps execute).
+	if data.has("rng_seed"):
+		GameState.rng.seed = int(data["rng_seed"])
 
 	_steps = data.get("steps", [])
 	_step_index = 0
@@ -156,6 +187,39 @@ func _process_next_step() -> void:
 		"choose":
 			var index: int = step.get("index", 0)
 			_runtime.scripted_make_choice(index)
+			await get_tree().process_frame
+			_process_next_step()
+
+		"shop_buy":
+			SignalBus.scripted_shop_buy.emit(int(step.get("index", 0)), int(step.get("count", 1)))
+			await get_tree().process_frame
+			_process_next_step()
+
+		"shop_sell":
+			SignalBus.scripted_shop_sell.emit(str(step.get("kind", "item")), int(step.get("id", 0)), int(step.get("count", 1)))
+			await get_tree().process_frame
+			_process_next_step()
+
+		"shop_close":
+			SignalBus.scripted_shop_close.emit()
+			await get_tree().process_frame
+			_process_next_step()
+
+		"battle_attack":
+			SignalBus.scripted_battle_action.emit("attack", { "target": int(step.get("target", 0)) })
+			await get_tree().process_frame
+			_process_next_step()
+
+		"battle_item":
+			var bi_params: Dictionary = { "item_id": int(step.get("item_id", 0)) }
+			if step.has("target_actor_id"):
+				bi_params["target_actor_id"] = int(step["target_actor_id"])
+			SignalBus.scripted_battle_action.emit("item", bi_params)
+			await get_tree().process_frame
+			_process_next_step()
+
+		"battle_flee":
+			SignalBus.scripted_battle_action.emit("flee", {})
 			await get_tree().process_frame
 			_process_next_step()
 
@@ -272,6 +336,110 @@ func _process_next_step() -> void:
 			_record_assertion(
 				_game_over == go_expected,
 				"expect_game_over == %s : got %s" % [str(go_expected), str(_game_over)]
+			)
+			_process_next_step()
+
+		"expect_gold":
+			var gold_expected: int = int(step.get("value", 0))
+			_record_assertion(
+				GameState.gold == gold_expected,
+				"expect_gold == %d : got %d" % [gold_expected, GameState.gold]
+			)
+			_process_next_step()
+
+		"expect_item_count":
+			var ic_kind: String = str(step.get("kind", "item"))
+			var ic_id: int = int(step.get("id", 0))
+			var ic_expected: int = int(step.get("value", 0))
+			var ic_actual: int = GameState.get_stock(ic_kind, ic_id)
+			_record_assertion(
+				ic_actual == ic_expected,
+				"expect_item_count %s[%d] == %d : got %d" % [ic_kind, ic_id, ic_expected, ic_actual]
+			)
+			_process_next_step()
+
+		"expect_party_size":
+			var ps_expected: int = int(step.get("value", 1))
+			_record_assertion(
+				GameState.party.size() == ps_expected,
+				"expect_party_size == %d : got %d" % [ps_expected, GameState.party.size()]
+			)
+			_process_next_step()
+
+		"expect_actor_hp":
+			var ah_id: int = int(step.get("actor_id", 0))
+			var ah_member: Dictionary = GameState.get_member(ah_id)
+			var ah_actual: int = int(ah_member.get("hp", -1))
+			if step.has("gte"):
+				var ah_min: int = int(step["gte"])
+				_record_assertion(
+					not ah_member.is_empty() and ah_actual >= ah_min,
+					"expect_actor_hp[%d] >= %d : got %d" % [ah_id, ah_min, ah_actual]
+				)
+			else:
+				var ah_expected: int = int(step.get("value", 0))
+				_record_assertion(
+					not ah_member.is_empty() and ah_actual == ah_expected,
+					"expect_actor_hp[%d] == %d : got %d" % [ah_id, ah_expected, ah_actual]
+				)
+			_process_next_step()
+
+		"expect_battle_active":
+			var ba_expected: bool = step.get("value", true)
+			var ba_actual: bool = _runtime.get_snapshot().get("battle", {}).get("active", false)
+			_record_assertion(
+				ba_actual == ba_expected,
+				"expect_battle_active == %s : got %s" % [str(ba_expected), str(ba_actual)]
+			)
+			_process_next_step()
+
+		"expect_battle_result":
+			var br_expected: String = str(step.get("value", "win"))
+			var br_actual: String = str(_runtime.get_snapshot().get("battle", {}).get("last_result", ""))
+			_record_assertion(
+				br_actual == br_expected,
+				"expect_battle_result == \"%s\" : got \"%s\"" % [br_expected, br_actual]
+			)
+			_process_next_step()
+
+		"expect_enemy_hp":
+			var eh_index: int = int(step.get("index", 0))
+			var eh_enemies: Array = _runtime.get_snapshot().get("battle", {}).get("enemies", [])
+			var eh_actual: int = -1
+			if eh_index >= 0 and eh_index < eh_enemies.size():
+				eh_actual = int(eh_enemies[eh_index].get("hp", -1))
+			if step.has("lte"):
+				var eh_max: int = int(step["lte"])
+				_record_assertion(
+					eh_actual >= 0 and eh_actual <= eh_max,
+					"expect_enemy_hp[%d] <= %d : got %d" % [eh_index, eh_max, eh_actual]
+				)
+			else:
+				var eh_expected: int = int(step.get("value", 0))
+				_record_assertion(
+					eh_actual == eh_expected,
+					"expect_enemy_hp[%d] == %d : got %d" % [eh_index, eh_expected, eh_actual]
+				)
+			_process_next_step()
+
+		"expect_shop_open":
+			var so_expected: bool = step.get("value", true)
+			var so_actual: bool = _runtime.get_snapshot().get("shop_open", false)
+			_record_assertion(
+				so_actual == so_expected,
+				"expect_shop_open == %s : got %s" % [str(so_expected), str(so_actual)]
+			)
+			_process_next_step()
+
+		"expect_actor_stat":
+			var as_id: int = int(step.get("actor_id", 0))
+			var as_stat: String = str(step.get("stat", "atk"))
+			var as_expected: int = int(step.get("value", 0))
+			var as_stats: Dictionary = GameState.get_member_stats(as_id)
+			var as_actual: int = int(as_stats.get(as_stat, -1))
+			_record_assertion(
+				not as_stats.is_empty() and as_actual == as_expected,
+				"expect_actor_stat[%d].%s == %d : got %d" % [as_id, as_stat, as_expected, as_actual]
 			)
 			_process_next_step()
 

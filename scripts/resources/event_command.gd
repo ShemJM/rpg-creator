@@ -19,6 +19,15 @@ enum Type {
 	JUMP_TO_LABEL,
 	GAME_OVER,
 	MOVE_ROUTE,
+	# Append-only past this point: legacy project files store integer
+	# ordinals, so reordering the entries above would corrupt them on load.
+	CHANGE_GOLD,
+	CHANGE_ITEMS,
+	CHANGE_HP,
+	CHANGE_EQUIPMENT,
+	USE_ITEM,
+	SHOP_PROCESSING,
+	BATTLE_PROCESSING,
 }
 
 @export var type: Type = Type.SHOW_TEXT
@@ -44,6 +53,21 @@ enum Type {
 ##                         "face_up","face_down","face_left","face_right","turn_toward_player"],
 ##               "wait_for_completion": true }
 ##   Movement steps walk one tile; face_* / turn_toward_player only change facing.
+## CHANGE_GOLD: { "op": "add"|"sub"|"set", "value": 100 }
+## CHANGE_ITEMS: { "kind": "item"|"equip", "id": 0, "op": "add"|"sub"|"set", "count": 1 }
+## CHANGE_HP: { "actor_id": -1 (whole party) | actor id, "op": "add"|"sub"|"set",
+##              "value": 20, "allow_ko": false } — without allow_ko HP floors at 1;
+##   with allow_ko a full party wipe triggers game over.
+## CHANGE_EQUIPMENT: { "actor_id": 0, "slot": "weapon"|"head"|"body"|"accessory",
+##                     "equip_id": 3 } — -1 unequips; equipping consumes from stock.
+## USE_ITEM: { "item_id": 0, "actor_id": 0 } — applies effect {"hp","mp"}; consumables decrement.
+## SHOP_PROCESSING: { "entries": [ { "kind": "item"|"equip", "id": 0, "price": 30 } ] }
+##   price optional (defaults to the database price); sell price = floor(price / 2).
+##   Blocks the event until the shop closes.
+## BATTLE_PROCESSING: { "enemies": [enemy_id, ...], "can_flee": true,
+##                      "commands_win": [EventCommand...], "commands_lose": [EventCommand...] }
+##   Blocks until the battle ends. win -> commands_win; lose -> commands_lose,
+##   or game over when commands_lose is empty; flee -> continue past the command.
 @export var params: Dictionary = {}
 
 
@@ -155,4 +179,53 @@ static func make_move_route(target: String, steps: Array, wait_for_completion: b
 	var cmd := EventCommand.new()
 	cmd.type = Type.MOVE_ROUTE
 	cmd.params = { "target": target, "steps": steps, "wait_for_completion": wait_for_completion }
+	return cmd
+
+
+static func make_change_gold(op: String, value: int) -> EventCommand:
+	var cmd := EventCommand.new()
+	cmd.type = Type.CHANGE_GOLD
+	cmd.params = { "op": op, "value": value }
+	return cmd
+
+
+static func make_change_items(kind: String, id: int, op: String, count: int) -> EventCommand:
+	var cmd := EventCommand.new()
+	cmd.type = Type.CHANGE_ITEMS
+	cmd.params = { "kind": kind, "id": id, "op": op, "count": count }
+	return cmd
+
+
+static func make_change_hp(actor_id: int, op: String, value: int, allow_ko: bool = false) -> EventCommand:
+	var cmd := EventCommand.new()
+	cmd.type = Type.CHANGE_HP
+	cmd.params = { "actor_id": actor_id, "op": op, "value": value, "allow_ko": allow_ko }
+	return cmd
+
+
+static func make_change_equipment(actor_id: int, slot: String, equip_id: int) -> EventCommand:
+	var cmd := EventCommand.new()
+	cmd.type = Type.CHANGE_EQUIPMENT
+	cmd.params = { "actor_id": actor_id, "slot": slot, "equip_id": equip_id }
+	return cmd
+
+
+static func make_use_item(item_id: int, actor_id: int) -> EventCommand:
+	var cmd := EventCommand.new()
+	cmd.type = Type.USE_ITEM
+	cmd.params = { "item_id": item_id, "actor_id": actor_id }
+	return cmd
+
+
+static func make_shop_processing(entries: Array) -> EventCommand:
+	var cmd := EventCommand.new()
+	cmd.type = Type.SHOP_PROCESSING
+	cmd.params = { "entries": entries }
+	return cmd
+
+
+static func make_battle_processing(enemy_ids: Array, can_flee: bool = true) -> EventCommand:
+	var cmd := EventCommand.new()
+	cmd.type = Type.BATTLE_PROCESSING
+	cmd.params = { "enemies": enemy_ids, "can_flee": can_flee, "commands_win": [], "commands_lose": [] }
 	return cmd

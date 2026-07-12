@@ -1,0 +1,71 @@
+{
+	"version": 5,
+	"maps": [
+		{
+			"id": 0,
+			"map_name": "Market",
+			"width": 9,
+			"height": 9,
+			"ground_layer": {
+				"0,0": 0, "1,0": 0, "2,0": 0, "3,0": 0, "4,0": 0, "5,0": 0, "6,0": 0, "7,0": 0, "8,0": 0,
+				"0,1": 0, "1,1": 0, "2,1": 0, "3,1": 0, "4,1": 0, "5,1": 0, "6,1": 0, "7,1": 0, "8,1": 0,
+				"0,2": 0, "1,2": 0, "2,2": 0, "3,2": 0, "4,2": 0, "5,2": 0, "6,2": 0, "7,2": 0, "8,2": 0,
+				"0,3": 0, "1,3": 0, "2,3": 0, "3,3": 0, "4,3": 0, "5,3": 0, "6,3": 0, "7,3": 0, "8,3": 0,
+				"0,4": 0, "1,4": 0, "2,4": 0, "3,4": 0, "4,4": 0, "5,4": 0, "6,4": 0, "7,4": 0, "8,4": 0,
+				"0,5": 0, "1,5": 0, "2,5": 0, "3,5": 0, "4,5": 0, "5,5": 0, "6,5": 0, "7,5": 0, "8,5": 0,
+				"0,6": 0, "1,6": 0, "2,6": 0, "3,6": 0, "4,6": 0, "5,6": 0, "6,6": 0, "7,6": 0, "8,6": 0,
+				"0,7": 0, "1,7": 0, "2,7": 0, "3,7": 0, "4,7": 0, "5,7": 0, "6,7": 0, "7,7": 0, "8,7": 0,
+				"0,8": 0, "1,8": 0, "2,8": 0, "3,8": 0, "4,8": 0, "5,8": 0, "6,8": 0, "7,8": 0, "8,8": 0
+			},
+			"surface_layer": {},
+			"events": [
+				{
+					"id": 0,
+					"event_name": "Shopkeeper",
+					"x": 3,
+					"y": 4,
+					"pages": [
+						{
+							"trigger": "ACTION_BUTTON",
+							"graphic_color": [0.8, 0.6, 0.2, 1.0],
+							"commands": [
+								{ "type": "SHOW_TEXT", "params": { "name": "Shopkeeper", "lines": ["Welcome! Take a look at my wares."] } },
+								{ "type": "SHOP_PROCESSING", "params": { "entries": [
+									{ "kind": "item", "id": 0 },
+									{ "kind": "equip", "id": 0, "price": 50 }
+								] } },
+								{ "type": "SHOW_TEXT", "params": { "name": "Shopkeeper", "lines": ["Come again!"] } }
+							]
+						}
+					]
+				}
+			]
+		}
+	],
+	"system": {
+		"starting_party": [0],
+		"starting_gold": 100
+	},
+	"database": {
+		"actors": [
+			{
+				"id": 0,
+				"actor_name": "Wren",
+				"class_id": 0,
+				"initial_level": 1,
+				"stats": { "max_hp": 90, "max_mp": 15, "atk": 11, "def": 9, "mat": 10, "mdf": 10, "agi": 10, "luk": 10 },
+				"graphic": null,
+				"note": ""
+			}
+		],
+		"classes": [
+			{ "id": 0, "class_name": "Trader", "stats": { "max_hp": 90, "max_mp": 15, "atk": 10, "def": 10, "mat": 10, "mdf": 10, "agi": 10, "luk": 10 }, "note": "" }
+		],
+		"items": [
+			{ "id": 0, "item_name": "Potion", "description": "Restores 25 HP.", "price": 30, "consumable": true, "effect": { "hp": 25, "mp": 0 } }
+		],
+		"equipment": [
+			{ "id": 0, "equip_name": "Iron Shield", "kind": "armor", "slot": "body", "description": "", "price": 60, "stat_mods": { "max_hp": 0, "max_mp": 0, "atk": 0, "def": 4, "mat": 0, "mdf": 0, "agi": 0, "luk": 0 }, "note": "" }
+		]
+	}
+}

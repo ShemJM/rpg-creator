@@ -13,7 +13,11 @@ const MAX_SWITCHES := 100
 const MAX_VARIABLES := 100
 const SELF_SWITCH_LETTERS := ["A", "B", "C", "D"]
 const VARIABLE_OPS := ["set", "add", "sub", "mul", "div"]
-const CONDITION_TYPES := ["switch", "variable_gte", "self_switch"]
+const RESOURCE_OPS := ["set", "add", "sub"]
+const CONDITION_TYPES := ["switch", "variable_gte", "self_switch", "gold_gte", "has_item"]
+const STOCK_KINDS := ["item", "equip"]
+const EQUIP_SLOTS := ["weapon", "head", "body", "accessory"]
+const STAT_KEYS := ["max_hp", "max_mp", "atk", "def", "mat", "mdf", "agi", "luk"]
 const MOVE_ROUTE_TARGETS := ["player", "this"]
 const MOVE_ROUTE_STEPS := [
 	"up", "down", "left", "right", "wait",
@@ -24,10 +28,15 @@ const SCENARIO_ACTIONS := [
 	"expect_switch", "expect_variable", "expect_position",
 	"expect_player_facing", "expect_event_facing", "expect_dialogue",
 	"expect_event_erased", "expect_event_running", "expect_game_over",
+	"expect_gold", "expect_item_count", "expect_party_size",
+	"expect_actor_hp", "expect_actor_stat",
+	"shop_buy", "shop_sell", "shop_close", "expect_shop_open",
+	"battle_attack", "battle_item", "battle_flee",
+	"expect_battle_active", "expect_battle_result", "expect_enemy_hp",
 	"snapshot",
 ]
 const DIRECTIONS := ["up", "down", "left", "right"]
-const SUPPORTED_VERSIONS := [1, 2, 3, 4]
+const SUPPORTED_VERSIONS := [1, 2, 3, 4, 5]
 
 
 static func validate_project(data: Dictionary) -> Array:
@@ -75,20 +84,58 @@ static func validate_project(data: Dictionary) -> Array:
 		seen_map_ids[_as_int(mid)] = true
 		map_bounds[_as_int(mid)] = Vector2i(_as_int(m.get("width", 0)), _as_int(m.get("height", 0)))
 
+	# Database id sets, so commands can cross-reference them.
+	var db: Variant = data.get("database", {})
+	var ctx: Dictionary = {
+		"map_bounds": map_bounds,
+		"actor_ids": _collect_ids(db, "actors"),
+		"item_ids": _collect_ids(db, "items"),
+		"equip_ids": _collect_ids(db, "equipment"),
+		"enemy_ids": _collect_ids(db, "enemies"),
+	}
+
 	for i in range(maps.size()):
 		if maps[i] is Dictionary:
-			_validate_map(errors, maps[i], "maps[%d]" % i, tile_ids, map_bounds)
+			_validate_map(errors, maps[i], "maps[%d]" % i, tile_ids, ctx)
 
-	var db: Variant = data.get("database", {})
 	if db is Dictionary:
 		_validate_database(errors, db)
 	elif db != null:
 		_err(errors, "database", "must be an object")
 
+	_validate_system(errors, data.get("system", null), ctx)
+
 	return errors
 
 
-static func _validate_map(errors: Array, m: Dictionary, path: String, tile_ids: Dictionary, map_bounds: Dictionary) -> void:
+static func _collect_ids(db: Variant, table: String) -> Dictionary:
+	var ids: Dictionary = {}
+	if db is Dictionary and (db as Dictionary).get(table, null) is Array:
+		for entry in db[table]:
+			if entry is Dictionary and _is_int((entry as Dictionary).get("id", null)):
+				ids[_as_int(entry["id"])] = true
+	return ids
+
+
+static func _validate_system(errors: Array, sys: Variant, ctx: Dictionary) -> void:
+	if sys == null:
+		return
+	if not sys is Dictionary:
+		_err(errors, "system", "must be an object")
+		return
+	var starting: Variant = (sys as Dictionary).get("starting_party", [])
+	if not starting is Array:
+		_err(errors, "system.starting_party", "must be an array of actor ids")
+	else:
+		for i in range((starting as Array).size()):
+			if not _is_int(starting[i]) or not ctx["actor_ids"].has(_as_int(starting[i])):
+				_err(errors, "system.starting_party[%d]" % i, "unknown actor id: %s" % str(starting[i]))
+	var sgold: Variant = (sys as Dictionary).get("starting_gold", 0)
+	if not _is_int(sgold) or _as_int(sgold) < 0:
+		_err(errors, "system.starting_gold", "must be a non-negative integer")
+
+
+static func _validate_map(errors: Array, m: Dictionary, path: String, tile_ids: Dictionary, ctx: Dictionary) -> void:
 	var w: int = _as_int(m.get("width", 0))
 	var h: int = _as_int(m.get("height", 0))
 	if w < 1 or h < 1:
@@ -141,12 +188,12 @@ static func _validate_map(errors: Array, m: Dictionary, path: String, tile_ids: 
 			continue
 		for p in range((pages as Array).size()):
 			if pages[p] is Dictionary:
-				_validate_page(errors, pages[p], "%s.pages[%d]" % [epath, p], map_bounds)
+				_validate_page(errors, pages[p], "%s.pages[%d]" % [epath, p], ctx)
 			else:
 				_err(errors, "%s.pages[%d]" % [epath, p], "page must be an object")
 
 
-static func _validate_page(errors: Array, page: Dictionary, path: String, map_bounds: Dictionary) -> void:
+static func _validate_page(errors: Array, page: Dictionary, path: String, ctx: Dictionary) -> void:
 	var trigger: Variant = page.get("trigger", 0)
 	if _canonical_enum(trigger, EventPage.Trigger) < 0:
 		_err(errors, "%s.trigger" % path, "unknown trigger (0-3 or one of %s): %s" % [str(EventPage.Trigger.keys()), str(trigger)])
@@ -172,7 +219,7 @@ static func _validate_page(errors: Array, page: Dictionary, path: String, map_bo
 	# Jumps from nested branches resolve against page-level labels.
 	var labels: Dictionary = {}
 	_collect_labels(commands, labels)
-	_validate_commands(errors, commands, "%s.commands" % path, map_bounds, labels)
+	_validate_commands(errors, commands, "%s.commands" % path, ctx, labels)
 
 
 static func _collect_labels(commands: Array, labels: Dictionary) -> void:
@@ -184,12 +231,12 @@ static func _collect_labels(commands: Array, labels: Dictionary) -> void:
 			continue
 		if _canonical_enum((c as Dictionary).get("type", null), EventCommand.Type) == EventCommand.Type.LABEL:
 			labels[str((params as Dictionary).get("name", ""))] = true
-		for branch in ["commands_if", "commands_else"]:
+		for branch in ["commands_if", "commands_else", "commands_win", "commands_lose"]:
 			if (params as Dictionary).get(branch, null) is Array:
 				_collect_labels(params[branch], labels)
 
 
-static func _validate_commands(errors: Array, commands: Array, path: String, map_bounds: Dictionary, labels: Dictionary) -> void:
+static func _validate_commands(errors: Array, commands: Array, path: String, ctx: Dictionary, labels: Dictionary) -> void:
 	for i in range(commands.size()):
 		var cpath := "%s[%d]" % [path, i]
 		if not commands[i] is Dictionary:
@@ -204,10 +251,10 @@ static func _validate_commands(errors: Array, commands: Array, path: String, map
 		if not params is Dictionary:
 			_err(errors, "%s.params" % cpath, "params must be an object")
 			continue
-		_validate_params(errors, ctype, params, cpath, map_bounds, labels)
+		_validate_params(errors, ctype, params, cpath, ctx, labels)
 
 
-static func _validate_params(errors: Array, ctype: int, params: Dictionary, cpath: String, map_bounds: Dictionary, labels: Dictionary) -> void:
+static func _validate_params(errors: Array, ctype: int, params: Dictionary, cpath: String, ctx: Dictionary, labels: Dictionary) -> void:
 	match ctype:
 		EventCommand.Type.SHOW_TEXT:
 			if not (params.get("lines", null) is Array) or (params["lines"] as Array).is_empty():
@@ -237,7 +284,12 @@ static func _validate_params(errors: Array, ctype: int, params: Dictionary, cpat
 				_err(errors, "%s.params.condition_type" % cpath, "must be one of %s, got \"%s\"" % [str(CONDITION_TYPES), cond])
 			elif cond == "self_switch" and not SELF_SWITCH_LETTERS.has(str(params.get("value", ""))):
 				_err(errors, "%s.params.value" % cpath, "self_switch condition needs value A-D")
-			elif cond != "self_switch":
+			elif cond == "gold_gte":
+				if not _is_int(params.get("value", null)):
+					_err(errors, "%s.params.value" % cpath, "gold_gte condition needs an integer value")
+			elif cond == "has_item":
+				_check_stock_ref(errors, params, "%s.params" % cpath, ctx)
+			elif cond == "switch" or cond == "variable_gte":
 				var id: int = _as_int(params.get("id", 0))
 				var limit: int = MAX_SWITCHES if cond == "switch" else MAX_VARIABLES
 				if id < 0 or id >= limit:
@@ -245,11 +297,12 @@ static func _validate_params(errors: Array, ctype: int, params: Dictionary, cpat
 			for branch in ["commands_if", "commands_else"]:
 				var sub: Variant = params.get(branch, [])
 				if sub is Array:
-					_validate_commands(errors, sub, "%s.params.%s" % [cpath, branch], map_bounds, labels)
+					_validate_commands(errors, sub, "%s.params.%s" % [cpath, branch], ctx, labels)
 				else:
 					_err(errors, "%s.params.%s" % [cpath, branch], "must be an array of commands")
 
 		EventCommand.Type.TRANSFER_PLAYER:
+			var map_bounds: Dictionary = ctx["map_bounds"]
 			var mid: Variant = params.get("map_id", null)
 			if not _is_int(mid) or not map_bounds.has(_as_int(mid)):
 				_err(errors, "%s.params.map_id" % cpath, "TRANSFER_PLAYER target map does not exist: %s" % str(mid))
@@ -294,6 +347,86 @@ static func _validate_params(errors: Array, ctype: int, params: Dictionary, cpat
 					if not MOVE_ROUTE_STEPS.has(str(steps[s])):
 						_err(errors, "%s.params.steps[%d]" % [cpath, s], "unknown step \"%s\" (allowed: %s)" % [str(steps[s]), str(MOVE_ROUTE_STEPS)])
 
+		EventCommand.Type.CHANGE_GOLD:
+			if not RESOURCE_OPS.has(str(params.get("op", "add"))):
+				_err(errors, "%s.params.op" % cpath, "op must be one of %s" % str(RESOURCE_OPS))
+			if not _is_int(params.get("value", null)):
+				_err(errors, "%s.params.value" % cpath, "CHANGE_GOLD needs an integer \"value\"")
+
+		EventCommand.Type.CHANGE_ITEMS:
+			if not RESOURCE_OPS.has(str(params.get("op", "add"))):
+				_err(errors, "%s.params.op" % cpath, "op must be one of %s" % str(RESOURCE_OPS))
+			if not _is_int(params.get("count", 1)) or _as_int(params.get("count", 1)) < 0:
+				_err(errors, "%s.params.count" % cpath, "count must be a non-negative integer")
+			_check_stock_ref(errors, params, "%s.params" % cpath, ctx)
+
+		EventCommand.Type.CHANGE_HP:
+			if not RESOURCE_OPS.has(str(params.get("op", "sub"))):
+				_err(errors, "%s.params.op" % cpath, "op must be one of %s" % str(RESOURCE_OPS))
+			if not _is_int(params.get("value", null)):
+				_err(errors, "%s.params.value" % cpath, "CHANGE_HP needs an integer \"value\"")
+			var hp_actor: int = _as_int(params.get("actor_id", -1))
+			if hp_actor != -1 and not ctx["actor_ids"].has(hp_actor):
+				_err(errors, "%s.params.actor_id" % cpath, "unknown actor id: %d (-1 = whole party)" % hp_actor)
+
+		EventCommand.Type.CHANGE_EQUIPMENT:
+			if not ctx["actor_ids"].has(_as_int(params.get("actor_id", -1))):
+				_err(errors, "%s.params.actor_id" % cpath, "unknown actor id: %s" % str(params.get("actor_id")))
+			if not EQUIP_SLOTS.has(str(params.get("slot", ""))):
+				_err(errors, "%s.params.slot" % cpath, "slot must be one of %s" % str(EQUIP_SLOTS))
+			var ce_id: int = _as_int(params.get("equip_id", -1))
+			if ce_id != -1 and not ctx["equip_ids"].has(ce_id):
+				_err(errors, "%s.params.equip_id" % cpath, "unknown equipment id: %d (-1 = unequip)" % ce_id)
+
+		EventCommand.Type.USE_ITEM:
+			if not ctx["item_ids"].has(_as_int(params.get("item_id", -1))):
+				_err(errors, "%s.params.item_id" % cpath, "unknown item id: %s" % str(params.get("item_id")))
+			if not ctx["actor_ids"].has(_as_int(params.get("actor_id", -1))):
+				_err(errors, "%s.params.actor_id" % cpath, "unknown actor id: %s" % str(params.get("actor_id")))
+
+		EventCommand.Type.BATTLE_PROCESSING:
+			var bp_enemies: Variant = params.get("enemies", null)
+			if not bp_enemies is Array or (bp_enemies as Array).is_empty():
+				_err(errors, "%s.params.enemies" % cpath, "BATTLE_PROCESSING needs a non-empty \"enemies\" array of enemy ids")
+			else:
+				for b in range((bp_enemies as Array).size()):
+					if not _is_int(bp_enemies[b]) or not ctx["enemy_ids"].has(_as_int(bp_enemies[b])):
+						_err(errors, "%s.params.enemies[%d]" % [cpath, b], "unknown enemy id: %s" % str(bp_enemies[b]))
+			for branch in ["commands_win", "commands_lose"]:
+				var bp_sub: Variant = params.get(branch, [])
+				if bp_sub is Array:
+					_validate_commands(errors, bp_sub, "%s.params.%s" % [cpath, branch], ctx, labels)
+				else:
+					_err(errors, "%s.params.%s" % [cpath, branch], "must be an array of commands")
+
+		EventCommand.Type.SHOP_PROCESSING:
+			var shop_entries: Variant = params.get("entries", null)
+			if not shop_entries is Array or (shop_entries as Array).is_empty():
+				_err(errors, "%s.params.entries" % cpath, "SHOP_PROCESSING needs a non-empty \"entries\" array")
+			else:
+				for s in range((shop_entries as Array).size()):
+					var se: Variant = shop_entries[s]
+					var se_path := "%s.params.entries[%d]" % [cpath, s]
+					if not se is Dictionary:
+						_err(errors, se_path, "entry must be an object { kind, id, price? }")
+						continue
+					_check_stock_ref(errors, se, se_path, ctx)
+					var se_price: Variant = (se as Dictionary).get("price", 0)
+					if not _is_int(se_price) or _as_int(se_price) < 0:
+						_err(errors, "%s.price" % se_path, "price must be a non-negative integer")
+
+
+## Validate a {kind: "item"|"equip", id} reference against the database.
+static func _check_stock_ref(errors: Array, params: Dictionary, path: String, ctx: Dictionary) -> void:
+	var kind: String = str(params.get("kind", "item"))
+	if not STOCK_KINDS.has(kind):
+		_err(errors, "%s.kind" % path, "kind must be one of %s" % str(STOCK_KINDS))
+		return
+	var id: Variant = params.get("id", null)
+	var ids: Dictionary = ctx["equip_ids"] if kind == "equip" else ctx["item_ids"]
+	if not _is_int(id) or not ids.has(_as_int(id)):
+		_err(errors, "%s.id" % path, "unknown %s id: %s" % [kind, str(id)])
+
 
 static func _check_id_array(errors: Array, params: Dictionary, path: String, limit: int, kind: String) -> void:
 	var ids: Variant = params.get("ids", null)
@@ -325,6 +458,34 @@ static func _validate_database(errors: Array, db: Dictionary) -> void:
 			var e: Variant = equipment[i]
 			if e is Dictionary and not ["weapon", "armor"].has(str((e as Dictionary).get("kind", "weapon"))):
 				_err(errors, "database.equipment[%d].kind" % i, "kind must be \"weapon\" or \"armor\"")
+	var enemies: Variant = db.get("enemies", [])
+	if enemies is Array:
+		var item_ids := _collect_ids(db, "items")
+		var equip_ids := _collect_ids(db, "equipment")
+		for i in range((enemies as Array).size()):
+			var en: Variant = enemies[i]
+			if not en is Dictionary:
+				_err(errors, "database.enemies[%d]" % i, "enemy must be an object")
+				continue
+			var rewards: Variant = (en as Dictionary).get("item_rewards", [])
+			if not rewards is Array:
+				_err(errors, "database.enemies[%d].item_rewards" % i, "must be an array")
+				continue
+			for r in range((rewards as Array).size()):
+				var reward: Variant = rewards[r]
+				var rpath := "database.enemies[%d].item_rewards[%d]" % [i, r]
+				if not reward is Dictionary:
+					_err(errors, rpath, "reward must be { kind, id, count }")
+					continue
+				var rkind: String = str((reward as Dictionary).get("kind", "item"))
+				var rid: Variant = (reward as Dictionary).get("id", null)
+				var rids: Dictionary = equip_ids if rkind == "equip" else item_ids
+				if not STOCK_KINDS.has(rkind):
+					_err(errors, "%s.kind" % rpath, "kind must be one of %s" % str(STOCK_KINDS))
+				elif not _is_int(rid) or not rids.has(_as_int(rid)):
+					_err(errors, "%s.id" % rpath, "unknown %s id: %s" % [rkind, str(rid)])
+	elif enemies != null:
+		_err(errors, "database.enemies", "must be an array")
 
 
 # ---------------------------------------------------------------------------
@@ -336,6 +497,9 @@ static func validate_scenario(data: Dictionary) -> Array:
 	var project: String = str(data.get("project", ""))
 	if not project.is_empty() and not FileAccess.file_exists(project):
 		_err(errors, "project", "project file not found: %s" % project)
+
+	if data.has("rng_seed") and not _is_int(data["rng_seed"]):
+		_err(errors, "rng_seed", "must be an integer")
 
 	var steps: Variant = data.get("steps", null)
 	if not steps is Array:
@@ -368,6 +532,41 @@ static func validate_scenario(data: Dictionary) -> Array:
 			"expect_switch", "expect_variable":
 				if not _is_int(step.get("id", null)):
 					_err(errors, "%s.id" % spath, "%s needs an integer \"id\"" % action)
+			"expect_gold", "expect_party_size":
+				if not _is_int(step.get("value", null)):
+					_err(errors, "%s.value" % spath, "%s needs an integer \"value\"" % action)
+			"expect_item_count":
+				if not STOCK_KINDS.has(str(step.get("kind", "item"))):
+					_err(errors, "%s.kind" % spath, "kind must be one of %s" % str(STOCK_KINDS))
+				if not _is_int(step.get("id", null)) or not _is_int(step.get("value", null)):
+					_err(errors, spath, "expect_item_count needs integer \"id\" and \"value\"")
+			"expect_actor_hp":
+				if not _is_int(step.get("actor_id", null)):
+					_err(errors, "%s.actor_id" % spath, "expect_actor_hp needs an integer \"actor_id\"")
+				if not _is_int(step.get("value", null)) and not _is_int(step.get("gte", null)):
+					_err(errors, spath, "expect_actor_hp needs an integer \"value\" or \"gte\"")
+			"expect_actor_stat":
+				if not _is_int(step.get("actor_id", null)) or not _is_int(step.get("value", null)):
+					_err(errors, spath, "expect_actor_stat needs integer \"actor_id\" and \"value\"")
+				if not STAT_KEYS.has(str(step.get("stat", ""))):
+					_err(errors, "%s.stat" % spath, "stat must be one of %s" % str(STAT_KEYS))
+			"shop_buy":
+				if not _is_int(step.get("index", null)):
+					_err(errors, "%s.index" % spath, "shop_buy needs an integer \"index\" into the shop entries")
+			"shop_sell":
+				if not STOCK_KINDS.has(str(step.get("kind", "item"))) or not _is_int(step.get("id", null)):
+					_err(errors, spath, "shop_sell needs kind item|equip and an integer \"id\"")
+			"battle_item":
+				if not _is_int(step.get("item_id", null)):
+					_err(errors, "%s.item_id" % spath, "battle_item needs an integer \"item_id\"")
+			"expect_battle_result":
+				if not ["win", "lose", "flee"].has(str(step.get("value", ""))):
+					_err(errors, "%s.value" % spath, "expect_battle_result value must be win|lose|flee")
+			"expect_enemy_hp":
+				if not _is_int(step.get("index", null)):
+					_err(errors, "%s.index" % spath, "expect_enemy_hp needs an integer \"index\"")
+				if not _is_int(step.get("value", null)) and not _is_int(step.get("lte", null)):
+					_err(errors, spath, "expect_enemy_hp needs an integer \"value\" or \"lte\"")
 	if not has_assertion:
 		_err(errors, "steps", "scenario has no expect_* assertions — it can never fail")
 	return errors

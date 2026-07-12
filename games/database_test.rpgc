@@ -228,6 +228,31 @@
 				},
 				"note": ""
 			}
+		],
+		"enemies": [
+			{
+				"id": 0,
+				"enemy_name": "Cave Slime",
+				"stats": {
+					"max_hp": 30,
+					"max_mp": 0,
+					"atk": 8,
+					"def": 4,
+					"mat": 5,
+					"mdf": 5,
+					"agi": 6,
+					"luk": 5
+				},
+				"gold_reward": 12,
+				"item_rewards": [
+					{
+						"kind": "item",
+						"id": 0,
+						"count": 1
+					}
+				],
+				"note": ""
+			}
 		]
 	}
 }

@@ -1,0 +1,25 @@
+{
+	"project": "games/battle_demo.rpgc",
+	"start_map_id": 0,
+	"steps": [
+		{ "action": "wait_frames", "count": 5 },
+
+		{ "action": "move", "direction": "left", "times": 1 },
+		{ "action": "move", "direction": "right", "times": 1 },
+		{ "action": "expect_player_facing", "x": 1, "y": 0 },
+		{ "action": "interact" },
+		{ "action": "wait_frames", "count": 10 },
+		{ "action": "expect_dialogue", "contains": "cannot be won" },
+		{ "action": "advance_dialogue" },
+		{ "action": "wait_frames", "count": 10 },
+		{ "action": "expect_battle_active", "value": true },
+
+		{ "action": "battle_attack", "target": 0 },
+		{ "action": "wait_frames", "count": 10 },
+		{ "action": "expect_battle_active", "value": false },
+		{ "action": "expect_battle_result", "value": "lose" },
+		{ "action": "expect_actor_hp", "actor_id": 0, "value": 0 },
+		{ "action": "expect_game_over", "value": true },
+		{ "action": "snapshot" }
+	]
+}

@@ -1,0 +1,47 @@
+{
+	"project": "games/shop_demo.rpgc",
+	"start_map_id": 0,
+	"steps": [
+		{ "action": "wait_frames", "count": 5 },
+		{ "action": "expect_gold", "value": 100 },
+		{ "action": "expect_shop_open", "value": false },
+
+		{ "action": "move", "direction": "right", "times": 1 },
+		{ "action": "move", "direction": "left", "times": 1 },
+		{ "action": "interact" },
+		{ "action": "wait_frames", "count": 10 },
+		{ "action": "expect_dialogue", "contains": "my wares", "speaker": "Shopkeeper" },
+		{ "action": "advance_dialogue" },
+		{ "action": "wait_frames", "count": 10 },
+		{ "action": "expect_shop_open", "value": true },
+
+		{ "action": "shop_buy", "index": 0, "count": 1 },
+		{ "action": "wait_frames", "count": 5 },
+		{ "action": "expect_gold", "value": 70 },
+		{ "action": "expect_item_count", "kind": "item", "id": 0, "value": 1 },
+
+		{ "action": "shop_buy", "index": 1, "count": 1 },
+		{ "action": "wait_frames", "count": 5 },
+		{ "action": "expect_gold", "value": 20 },
+		{ "action": "expect_item_count", "kind": "equip", "id": 0, "value": 1 },
+
+		{ "action": "shop_buy", "index": 1, "count": 1 },
+		{ "action": "wait_frames", "count": 5 },
+		{ "action": "expect_gold", "value": 20 },
+		{ "action": "expect_item_count", "kind": "equip", "id": 0, "value": 1 },
+
+		{ "action": "shop_sell", "kind": "item", "id": 0, "count": 1 },
+		{ "action": "wait_frames", "count": 5 },
+		{ "action": "expect_gold", "value": 35 },
+		{ "action": "expect_item_count", "kind": "item", "id": 0, "value": 0 },
+
+		{ "action": "shop_close" },
+		{ "action": "wait_frames", "count": 10 },
+		{ "action": "expect_shop_open", "value": false },
+		{ "action": "expect_dialogue", "contains": "Come again" },
+		{ "action": "advance_dialogue" },
+		{ "action": "wait_frames", "count": 10 },
+		{ "action": "expect_event_running", "value": false },
+		{ "action": "snapshot" }
+	]
+}

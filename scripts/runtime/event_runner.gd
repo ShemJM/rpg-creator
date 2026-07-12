@@ -88,6 +88,33 @@ func _execute_command(cmd: EventCommand) -> void:
 			_cmd_game_over()
 		EventCommand.Type.MOVE_ROUTE:
 			_cmd_move_route(cmd.params)
+		EventCommand.Type.CHANGE_GOLD:
+			GameState.change_gold(str(cmd.params.get("op", "add")), int(cmd.params.get("value", 0)))
+			_execute_next()
+		EventCommand.Type.CHANGE_ITEMS:
+			GameState.change_stock(
+				str(cmd.params.get("kind", "item")),
+				int(cmd.params.get("id", 0)),
+				str(cmd.params.get("op", "add")),
+				int(cmd.params.get("count", 1))
+			)
+			_execute_next()
+		EventCommand.Type.CHANGE_HP:
+			_cmd_change_hp(cmd.params)
+		EventCommand.Type.CHANGE_EQUIPMENT:
+			GameState.equip(
+				int(cmd.params.get("actor_id", 0)),
+				str(cmd.params.get("slot", "weapon")),
+				int(cmd.params.get("equip_id", -1))
+			)
+			_execute_next()
+		EventCommand.Type.USE_ITEM:
+			GameState.use_item(int(cmd.params.get("item_id", 0)), int(cmd.params.get("actor_id", 0)))
+			_execute_next()
+		EventCommand.Type.SHOP_PROCESSING:
+			_cmd_shop_processing(cmd.params)
+		EventCommand.Type.BATTLE_PROCESSING:
+			_cmd_battle_processing(cmd.params)
 		_:
 			_execute_next()
 
@@ -172,6 +199,63 @@ func _cmd_control_variables(params: Dictionary) -> void:
 		SignalBus.trace_variable_changed.emit(id, GameState.get_variable(id))
 
 
+func _cmd_shop_processing(params: Dictionary) -> void:
+	var entries: Array = params.get("entries", [])
+	_waiting = true
+	# ShopUI owns the session (buy/sell/close, scripted or clicked) and emits
+	# shop_finished when it closes — the dialogue wait/resume pattern.
+	SignalBus.shop_finished.connect(_on_shop_finished, CONNECT_ONE_SHOT)
+	SignalBus.shop_requested.emit(entries)
+
+
+func _on_shop_finished() -> void:
+	_waiting = false
+	_execute_next()
+
+
+func _cmd_battle_processing(params: Dictionary) -> void:
+	var enemy_ids: Array = params.get("enemies", [])
+	var can_flee: bool = bool(params.get("can_flee", true))
+	_waiting = true
+	SignalBus.battle_finished.connect(_on_battle_finished.bind(params), CONNECT_ONE_SHOT)
+	SignalBus.battle_requested.emit(enemy_ids, can_flee)
+
+
+func _on_battle_finished(result: String, params: Dictionary) -> void:
+	_waiting = false
+	var branch: Array = []
+	match result:
+		"win":
+			branch = params.get("commands_win", [])
+		"lose":
+			branch = params.get("commands_lose", [])
+			if branch.is_empty():
+				# RPG Maker convention: a lost battle without a lose branch
+				# ends the game.
+				_cmd_game_over()
+				return
+	# "flee" (or an empty win branch) just continues past the command.
+	if branch.size() > 0:
+		var remaining := _commands.slice(_index)
+		_commands = branch + remaining
+		_index = 0
+	_execute_next()
+
+
+func _cmd_change_hp(params: Dictionary) -> void:
+	var allow_ko: bool = bool(params.get("allow_ko", false))
+	GameState.change_hp(
+		int(params.get("actor_id", -1)),
+		str(params.get("op", "sub")),
+		int(params.get("value", 0)),
+		allow_ko
+	)
+	if allow_ko and GameState.is_party_defeated():
+		_cmd_game_over()
+		return
+	_execute_next()
+
+
 func _cmd_conditional_branch(params: Dictionary) -> void:
 	var condition_met := false
 	var ctype: String = params.get("condition_type", "switch")
@@ -186,6 +270,12 @@ func _cmd_conditional_branch(params: Dictionary) -> void:
 		"self_switch":
 			var letter: String = str(value)
 			condition_met = _event.self_switches.get(letter, false)
+		"gold_gte":
+			condition_met = GameState.gold >= int(value)
+		"has_item":
+			var kind: String = str(params.get("kind", "item"))
+			var min_count: int = int(value) if (value is int or value is float) else 1
+			condition_met = GameState.get_stock(kind, id) >= min_count
 
 	var branch_cmds: Array
 	if condition_met:
