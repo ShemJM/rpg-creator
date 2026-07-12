@@ -7,6 +7,14 @@ var _no_recent_label: Label
 
 
 func _ready() -> void:
+	# Headless/agent mode: any user args (after "--") divert to the CLI runner
+	# instead of the UI. Autoload singletons only exist in a normal project
+	# run, so the runner must be hosted here rather than via godot --script.
+	if not OS.get_cmdline_user_args().is_empty():
+		var runner := preload("res://scripts/runtime/headless_runner.gd").new()
+		get_tree().root.add_child.call_deferred(runner)
+		visible = false
+		return
 	_build_ui()
 	_refresh_recent()
 

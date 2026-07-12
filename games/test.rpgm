@@ -307,9 +307,7 @@
 			"height": 15,
 			"id": 0,
 			"map_name": "Map 001",
-			"surface_layer": {
-
-			},
+			"surface_layer": {},
 			"width": 20
 		},
 		{
@@ -619,9 +617,7 @@
 			"height": 15,
 			"id": 1,
 			"map_name": "Map 002",
-			"surface_layer": {
-
-			},
+			"surface_layer": {},
 			"width": 20
 		},
 		{
@@ -931,9 +927,7 @@
 			"height": 15,
 			"id": 2,
 			"map_name": "Map 003",
-			"surface_layer": {
-
-			},
+			"surface_layer": {},
 			"width": 20
 		},
 		{
@@ -1243,11 +1237,9 @@
 			"height": 15,
 			"id": 3,
 			"map_name": "Map 004",
-			"surface_layer": {
-
-			},
+			"surface_layer": {},
 			"width": 20
 		}
 	],
-	"version": 1
+	"version": 4
 }

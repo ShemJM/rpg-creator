@@ -176,12 +176,13 @@ func scripted_move(direction: String) -> void:
 		"down":  dir_vec = Vector2i( 0,  1)
 		_:       return
 	var target := current_grid + dir_vec
-	# Bounds check.
-	if target.x < 0 or target.x >= _current_map.width or \
-	   target.y < 0 or target.y >= _current_map.height:
-		return
-	# Update facing direction.
+	# Update facing direction even when the step is blocked, matching a real
+	# walk attempt (lets scripted runs face-and-interact across walls).
 	(_player as PlayerCharacter).facing_direction = dir_vec
+	# Respect tile passability like manual play — physics collision doesn't
+	# apply to scripted teleport-steps, so check the grid directly.
+	if not _is_cell_passable(target):
+		return
 	# Teleport directly to target cell (top-left corner; grid calc uses int/CELL_SIZE).
 	_player.position = Vector2(target) * CELL_SIZE + Vector2(CELL_SIZE / 2.0, CELL_SIZE / 2.0)
 	# Emit trace immediately and sync _last_player_grid so _physics_process
@@ -234,6 +235,11 @@ func get_snapshot() -> Dictionary:
 		if sprite:
 			var d: Vector2i = sprite.get_direction()
 			event_facing[str(event_id)] = { "x": d.x, "y": d.y }
+	var events_erased: Array = []
+	if _current_map:
+		for ev: EventData in _current_map.events:
+			if ev.erased:
+				events_erased.append(ev.id)
 	return {
 		"map_id": _current_map.id if _current_map else -1,
 		"map_name": _current_map.map_name if _current_map else "",
@@ -241,6 +247,7 @@ func get_snapshot() -> Dictionary:
 		"player_facing": { "x": player_facing.x, "y": player_facing.y },
 		"event_facing": event_facing,
 		"event_running": _event_running,
+		"events_erased": events_erased,
 		"switches_on": switches,
 		"variables": variables,
 	}

@@ -1,0 +1,57 @@
+{
+	"project": "games/gate_demo.rpgc",
+	"start_map_id": 0,
+	"steps": [
+		{ "action": "wait_frames", "count": 5 },
+		{ "action": "expect_position", "map_id": 0, "x": 5, "y": 4 },
+
+		{ "action": "move", "direction": "up", "times": 1 },
+		{ "action": "move", "direction": "up", "times": 1 },
+		{ "action": "expect_position", "map_id": 0, "x": 5, "y": 3 },
+		{ "action": "expect_player_facing", "x": 0, "y": -1 },
+
+		{ "action": "interact" },
+		{ "action": "wait_frames", "count": 10 },
+		{ "action": "expect_dialogue", "contains": "locked tight" },
+		{ "action": "advance_dialogue" },
+		{ "action": "wait_frames", "count": 10 },
+
+		{ "action": "move", "direction": "down", "times": 1 },
+		{ "action": "move", "direction": "right", "times": 1 },
+		{ "action": "move", "direction": "left", "times": 1 },
+		{ "action": "expect_position", "map_id": 0, "x": 5, "y": 4 },
+		{ "action": "expect_player_facing", "x": -1, "y": 0 },
+
+		{ "action": "interact" },
+		{ "action": "wait_frames", "count": 10 },
+		{ "action": "expect_dialogue", "contains": "north gate is sealed", "speaker": "Gatekeeper" },
+		{ "action": "advance_dialogue" },
+		{ "action": "wait_frames", "count": 10 },
+		{ "action": "choose", "index": 0 },
+		{ "action": "wait_frames", "count": 10 },
+		{ "action": "expect_dialogue", "contains": "groans open", "speaker": "Gatekeeper" },
+		{ "action": "advance_dialogue" },
+		{ "action": "wait_frames", "count": 10 },
+		{ "action": "expect_switch", "id": 1, "value": true },
+		{ "action": "expect_variable", "id": 0, "value": 0 },
+
+		{ "action": "move", "direction": "up", "times": 1 },
+		{ "action": "interact" },
+		{ "action": "wait_frames", "count": 10 },
+		{ "action": "expect_dialogue", "contains": "swings open" },
+		{ "action": "advance_dialogue" },
+		{ "action": "wait_frames", "count": 80 },
+		{ "action": "expect_position", "map_id": 1, "x": 4, "y": 6 },
+
+		{ "action": "move", "direction": "up", "times": 1 },
+		{ "action": "interact" },
+		{ "action": "wait_frames", "count": 10 },
+		{ "action": "expect_dialogue", "contains": "Sunstone" },
+		{ "action": "advance_dialogue" },
+		{ "action": "wait_frames", "count": 20 },
+		{ "action": "expect_switch", "id": 2, "value": true },
+		{ "action": "expect_event_erased", "id": 0, "value": true },
+		{ "action": "expect_event_running", "value": false },
+		{ "action": "snapshot" }
+	]
+}

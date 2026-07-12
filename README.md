@@ -4,6 +4,8 @@ A **Godot 4 in-engine RPG authoring tool** — build tile maps, place events, sc
 
 Inspired by RPG Maker MV/MZ. The editor and runtime both live inside a single Godot project.
 
+Games can be built two ways: interactively in the editor UI, or **by agents** (Claude Code) that author the project JSON directly and verify it with the headless scenario test harness — see [CLAUDE.md](CLAUDE.md) for the full agent workflow, schema reference, and CLI.
+
 **Engine**: Godot 4.6 (GDScript)  
 **Renderer**: GL Compatibility
 
@@ -95,6 +97,17 @@ Open `project.godot` in Godot 4.6. Press **F5** to launch the editor.
 The **Play** button in the editor boots the 2D runtime using the currently selected map from `ProjectState`. Press it again (or press **Escape**) to return to the editor.
 
 No external build step required.
+
+### Headless / agents / CI
+
+```
+make setup            # download or locate a Godot 4.6 binary (bin/godot)
+make test             # validate + run every scenario in games/ + fixtures
+make validate P=games/my_game.rpgc
+make run-scenario S=games/my_game_scenario.json
+```
+
+Game projects are plain JSON (`games/*.rpgc`); scenarios (`games/*_scenario.json`) script a playthrough with assertions. CI (`.github/workflows/test.yml`) runs the whole suite on every push. `CLAUDE.md` documents the schema and workflow; `docs/agent-mcp-plan.md` records the interface design.
 
 ---
 

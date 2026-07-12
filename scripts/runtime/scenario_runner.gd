@@ -17,9 +17,16 @@ extends Node
 ##     { "action": "expect_position",   "map_id": 0, "x": 5, "y": 7 },
 ##     { "action": "expect_player_facing", "x": -1, "y": 0 },   // player facing vector
 ##     { "action": "expect_event_facing",  "id": 0, "x": 1, "y": 0 }, // event's facing vector
+##     { "action": "expect_dialogue",      "contains": "Hello" },  // any dialogue so far
+##     { "action": "expect_event_erased",  "id": 0, "value": true },
+##     { "action": "expect_event_running", "value": false },
+##     { "action": "expect_game_over" },
 ##     { "action": "snapshot" }         // emits trace_snapshot signal with current state
 ##   ]
 ## }
+##
+## Optional top-level "timeout_frames" (default 6000): the run fails with a
+## "timeout" assertion if it doesn't finish within that many frames.
 ##
 ## Results are collected in `results` and also written to stdout if headless is true.
 
@@ -33,6 +40,11 @@ var _step_index: int = 0
 var _waiting_frames: int = 0
 var _assertions: Array = []    # { "pass": bool, "message": String }
 var _trace: Array = []         # all trace_* signals collected during run
+var _running: bool = false
+var _finished: bool = false
+var _game_over: bool = false
+var _timeout_frames: int = 6000
+var _elapsed_frames: int = 0
 
 
 func setup(runtime: RuntimePlayer, is_headless: bool = false) -> void:
@@ -49,18 +61,20 @@ func setup(runtime: RuntimePlayer, is_headless: bool = false) -> void:
 	SignalBus.trace_choice_made.connect(_on_trace_choice)
 	SignalBus.trace_player_moved.connect(_on_trace_player_moved)
 	SignalBus.trace_assertion_failed.connect(_on_trace_assertion_failed)
+	SignalBus.trace_self_switch_changed.connect(_on_trace_self_switch)
+	SignalBus.trace_game_over.connect(_on_trace_game_over)
 
 
 func run_from_file(path: String) -> void:
 	if not FileAccess.file_exists(path):
-		push_error("[Scenario] File not found: %s" % path)
+		_record_assertion(false, "scenario file not found: %s" % path)
 		_finish()
 		return
 	var file := FileAccess.open(path, FileAccess.READ)
 	var parsed = JSON.parse_string(file.get_as_text())
 	file.close()
 	if not parsed is Dictionary:
-		push_error("[Scenario] Invalid JSON: %s" % path)
+		_record_assertion(false, "scenario file is not valid JSON: %s" % path)
 		_finish()
 		return
 	run_from_dict(parsed)
@@ -71,9 +85,14 @@ func run_from_dict(data: Dictionary) -> void:
 	var project_path: String = data.get("project", "")
 	if not project_path.is_empty():
 		if not ProjectState.load_from(project_path):
-			push_error("[Scenario] Could not load project: %s" % project_path)
+			# Recorded as a failed assertion so headless runs exit 1, not 0.
+			_record_assertion(false, "could not load project: %s" % project_path)
 			_finish()
 			return
+	elif ProjectState.maps.is_empty():
+		_record_assertion(false, "no project loaded and scenario has no \"project\" key")
+		_finish()
+		return
 
 	# Optionally switch start map.
 	var start_map_id: int = data.get("start_map_id", -1)
@@ -85,10 +104,26 @@ func run_from_dict(data: Dictionary) -> void:
 
 	_steps = data.get("steps", [])
 	_step_index = 0
+	_timeout_frames = int(data.get("timeout_frames", 6000))
+	_elapsed_frames = 0
+	_running = true
 	_process_next_step()
 
 
+## Watchdog: a scenario that never reaches its end (runaway waits, future
+## blocking actions) fails with a "timeout" assertion instead of hanging.
+func _process(_delta: float) -> void:
+	if not _running or _finished:
+		return
+	_elapsed_frames += 1
+	if _elapsed_frames > _timeout_frames:
+		_record_assertion(false, "timeout: scenario did not finish within %d frames" % _timeout_frames)
+		_finish()
+
+
 func _process_next_step() -> void:
+	if _finished:
+		return
 	if _step_index >= _steps.size():
 		_finish()
 		return
@@ -189,6 +224,57 @@ func _process_next_step() -> void:
 			)
 			_process_next_step()
 
+		"expect_dialogue":
+			var needle: String = str(step.get("contains", ""))
+			var want_speaker: String = str(step.get("speaker", ""))
+			var found := false
+			for entry in _trace:
+				if entry.get("type", "") != "dialogue":
+					continue
+				if not needle.is_empty() and not str(entry.get("text", "")).contains(needle):
+					continue
+				if not want_speaker.is_empty() and str(entry.get("speaker", "")) != want_speaker:
+					continue
+				found = true
+				break
+			_record_assertion(
+				found,
+				"expect_dialogue contains \"%s\"%s : %s" % [
+					needle,
+					"" if want_speaker.is_empty() else " from \"%s\"" % want_speaker,
+					"found" if found else "no matching dialogue in trace"
+				]
+			)
+			_process_next_step()
+
+		"expect_event_erased":
+			var er_id: int = step.get("id", 0)
+			var er_expected: bool = step.get("value", true)
+			var er_snap: Dictionary = _runtime.get_snapshot()
+			var er_actual: bool = er_snap.get("events_erased", []).has(er_id)
+			_record_assertion(
+				er_actual == er_expected,
+				"expect_event_erased[%d] == %s : got %s" % [er_id, str(er_expected), str(er_actual)]
+			)
+			_process_next_step()
+
+		"expect_event_running":
+			var run_expected: bool = step.get("value", true)
+			var run_actual: bool = _runtime.get_snapshot().get("event_running", false)
+			_record_assertion(
+				run_actual == run_expected,
+				"expect_event_running == %s : got %s" % [str(run_expected), str(run_actual)]
+			)
+			_process_next_step()
+
+		"expect_game_over":
+			var go_expected: bool = step.get("value", true)
+			_record_assertion(
+				_game_over == go_expected,
+				"expect_game_over == %s : got %s" % [str(go_expected), str(_game_over)]
+			)
+			_process_next_step()
+
 		"snapshot":
 			var snap: Dictionary = _runtime.get_snapshot()
 			_trace.append({ "type": "snapshot", "data": snap })
@@ -211,6 +297,10 @@ func _record_assertion(passed: bool, message: String) -> void:
 
 
 func _finish() -> void:
+	if _finished:
+		return
+	_finished = true
+	_running = false
 	var passed: int = 0
 	var failed: int = 0
 	for a in _assertions:
@@ -276,3 +366,12 @@ func _on_trace_player_moved(grid_pos: Vector2i, map_id: int) -> void:
 
 func _on_trace_assertion_failed(message: String) -> void:
 	_trace.append({ "type": "assertion_failed", "message": message })
+
+
+func _on_trace_self_switch(event_id: int, letter: String, value: bool) -> void:
+	_trace.append({ "type": "self_switch_changed", "event_id": event_id, "letter": letter, "value": value })
+
+
+func _on_trace_game_over() -> void:
+	_game_over = true
+	_trace.append({ "type": "game_over" })

@@ -4,13 +4,12 @@
 	"steps": [
 		{ "action": "wait_frames", "count": 5 },
 		{ "action": "snapshot" },
+		{ "action": "expect_position", "map_id": 0, "x": 10, "y": 7 },
 		{ "action": "move", "direction": "right", "times": 3 },
 		{ "action": "move", "direction": "down",  "times": 2 },
 		{ "action": "snapshot" },
-		{ "action": "interact" },
-		{ "action": "wait_frames", "count": 10 },
-		{ "action": "advance_dialogue" },
-		{ "action": "wait_frames", "count": 5 },
+		{ "action": "expect_position", "map_id": 0, "x": 13, "y": 9 },
+		{ "action": "expect_player_facing", "x": 0, "y": 1 },
 		{ "action": "snapshot" }
 	]
 }

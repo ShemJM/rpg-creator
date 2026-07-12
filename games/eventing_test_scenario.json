@@ -46,6 +46,11 @@
 			"value": true
 		},
 		{
+			"action": "expect_event_erased",
+			"id": 1,
+			"value": true
+		},
+		{
 			"action": "move",
 			"direction": "down",
 			"times": 1
@@ -89,6 +94,10 @@
 			"action": "expect_variable",
 			"id": 2,
 			"value": 1
+		},
+		{
+			"action": "expect_event_running",
+			"value": false
 		}
 	]
 }
