@@ -8,6 +8,7 @@
 		{ "action": "move", "direction": "left",  "times": 3 },
 		{ "action": "move", "direction": "up",    "times": 2 },
 		{ "action": "interact" },
+		{ "action": "expect_dialogue", "contains": "stolen by goblins", "speaker": "Elder" },
 		{ "action": "advance_dialogue" },
 		{ "action": "expect_position", "x": 4, "y": 4 },
 

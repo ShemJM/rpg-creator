@@ -234,6 +234,11 @@ func get_snapshot() -> Dictionary:
 		if sprite:
 			var d: Vector2i = sprite.get_direction()
 			event_facing[str(event_id)] = { "x": d.x, "y": d.y }
+	var events_erased: Array = []
+	if _current_map:
+		for ev: EventData in _current_map.events:
+			if ev.erased:
+				events_erased.append(ev.id)
 	return {
 		"map_id": _current_map.id if _current_map else -1,
 		"map_name": _current_map.map_name if _current_map else "",
@@ -241,6 +246,7 @@ func get_snapshot() -> Dictionary:
 		"player_facing": { "x": player_facing.x, "y": player_facing.y },
 		"event_facing": event_facing,
 		"event_running": _event_running,
+		"events_erased": events_erased,
 		"switches_on": switches,
 		"variables": variables,
 	}

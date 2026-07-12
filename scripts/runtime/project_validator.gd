@@ -22,7 +22,9 @@ const MOVE_ROUTE_STEPS := [
 const SCENARIO_ACTIONS := [
 	"move", "interact", "advance_dialogue", "choose", "wait_frames",
 	"expect_switch", "expect_variable", "expect_position",
-	"expect_player_facing", "expect_event_facing", "snapshot",
+	"expect_player_facing", "expect_event_facing", "expect_dialogue",
+	"expect_event_erased", "expect_event_running", "expect_game_over",
+	"snapshot",
 ]
 const DIRECTIONS := ["up", "down", "left", "right"]
 const SUPPORTED_VERSIONS := [1, 2, 3, 4]

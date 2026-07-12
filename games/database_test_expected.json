@@ -9,6 +9,12 @@
 			"name": "Bram"
 		}
 	],
+	"armor": [
+		{
+			"id": 1,
+			"name": "Leather Armor"
+		}
+	],
 	"classes": [
 		{
 			"id": 0,
@@ -33,12 +39,6 @@
 		{
 			"id": 0,
 			"name": "Short Sword"
-		}
-	],
-	"armor": [
-		{
-			"id": 1,
-			"name": "Leather Armor"
 		}
 	]
 }

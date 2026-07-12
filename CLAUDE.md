@@ -128,10 +128,16 @@ Follow-up branching after SHOW_CHOICES: the chosen index is written to **variabl
     { "action": "expect_position", "map_id": 1, "x": 5, "y": 7 },
     { "action": "expect_player_facing", "x": 1, "y": 0 },
     { "action": "expect_event_facing", "id": 0, "x": -1, "y": 0 },
+    { "action": "expect_dialogue", "contains": "Hello", "speaker": "Old Man" },
+    { "action": "expect_event_erased", "id": 0, "value": true },
+    { "action": "expect_event_running", "value": false },
+    { "action": "expect_game_over", "value": false },
     { "action": "snapshot" }
   ]
 }
 ```
+
+An optional top-level `"timeout_frames"` (default 6000) fails the run with a `timeout` assertion if it doesn't finish in time. `expect_dialogue` matches against **all** dialogue seen so far (lines of one box are joined with `\n`).
 
 Timing conventions that make scenarios deterministic:
 
@@ -140,7 +146,9 @@ Timing conventions that make scenarios deterministic:
 - One `advance_dialogue` per SHOW_TEXT box; dialogue must be advanced before the event continues.
 - Facing vectors: right `(1,0)`, left `(-1,0)`, up `(0,-1)`, down `(0,1)`.
 
-Results JSON: `{ passed, failed, total, assertions: [{pass, message}], trace: [...], snapshot }`. The `trace` array logs every event start/finish, command, switch/variable change, transfer, dialogue line, choice, and player move — read it to debug why an assertion failed. Final `snapshot`: `{ map_id, map_name, player_grid, player_facing, event_facing, event_running, switches_on, variables }` (only non-false switches / non-zero variables listed).
+Results JSON: `{ passed, failed, total, assertions: [{pass, message}], trace: [...], snapshot }`. The `trace` array logs every event start/finish, command, switch/variable/self-switch change, transfer, dialogue line, choice, game over, and player move — read it to debug why an assertion failed. Final `snapshot`: `{ map_id, map_name, player_grid, player_facing, event_facing, event_running, events_erased, switches_on, variables }` (only non-false switches / non-zero variables listed).
+
+`make test-scenarios` runs every scenario in `games/` inside **one** engine boot (`--test-all games`), so the suite stays fast as games accumulate.
 
 ## Gotchas
 

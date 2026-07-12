@@ -1,0 +1,9 @@
+{
+	"project": "games/test.rpgm",
+	"start_map_id": 0,
+	"timeout_frames": 120,
+	"steps": [
+		{ "action": "wait_frames", "count": 999999 },
+		{ "action": "expect_position", "x": 10, "y": 7 }
+	]
+}

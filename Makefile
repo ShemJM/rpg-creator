@@ -10,7 +10,7 @@ SCENARIOS := $(wildcard games/*_scenario.json)
 
 PROJECTS := $(wildcard games/*.rpgm) $(wildcard games/*.rpgc)
 
-.PHONY: help setup test test-scenarios test-database test-validator test-legacy validate validate-all run-scenario list-maps list-database
+.PHONY: help setup test test-scenarios test-database test-validator test-legacy test-watchdog validate validate-all run-scenario list-maps list-database
 
 help:
 	@echo "make setup                              # install/locate Godot (bin/godot)"
@@ -24,11 +24,18 @@ help:
 setup:
 	bash scripts/setup-godot.sh
 
-test: validate-all test-validator test-scenarios test-legacy test-database
+test: validate-all test-validator test-scenarios test-legacy test-watchdog test-database
 
 # Pre-v4 project files (integer command types/triggers) must keep loading.
 test-legacy:
-	timeout $(TIMEOUT) $(GODOT) $(RUNNER) --scenario tests/fixtures/legacy_scenario.json
+	timeout $(TIMEOUT) $(GODOT) $(RUNNER) --test-all tests/fixtures
+
+# A scenario that never finishes must fail with a "timeout" assertion (exit 1).
+test-watchdog:
+	@timeout $(TIMEOUT) $(GODOT) $(RUNNER) --scenario tests/watchdog/timeout_scenario.json >/dev/null; \
+	code=$$?; \
+	if [ $$code -eq 1 ]; then echo "watchdog timeout OK"; \
+	else echo "watchdog FAILED (exit $$code, expected 1)"; exit 1; fi
 
 # The validator must reject a deliberately broken project (exit 1, not 0/2).
 test-validator:
@@ -48,14 +55,10 @@ validate-all:
 	done; \
 	exit $$fail
 
+# All scenarios in one engine boot (see headless_runner --test-all).
 test-scenarios:
 	@if [ -z "$(GODOT)" ]; then echo "No Godot binary — run 'make setup' first."; exit 1; fi
-	@fail=0; \
-	for s in $(SCENARIOS); do \
-		echo "=== $$s"; \
-		timeout $(TIMEOUT) $(GODOT) $(RUNNER) --scenario $$s || fail=1; \
-	done; \
-	exit $$fail
+	timeout 300 $(GODOT) $(RUNNER) --test-all games
 
 test-database:
 	@mkdir -p bin
