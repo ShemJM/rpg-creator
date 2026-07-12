@@ -17,6 +17,7 @@ var classes: Array[ClassData] = []
 var items: Array[ItemData] = []
 var equipment: Array[EquipData] = []  ## weapons + armor, distinguished by EquipData.kind
 var enemies: Array[EnemyData] = []
+var common_events: Array[CommonEventData] = []
 
 ## Project-level runtime settings (serialized as top-level "system"):
 ## { "starting_party": [actor_id, ...], "starting_gold": int }
@@ -139,6 +140,7 @@ func create_new_project() -> void:
 	current_map_index = -1
 	current_project_path = ""
 	player_graphic = null
+	common_events.clear()
 	_seed_default_database()
 	add_map("Map 001")
 
@@ -317,6 +319,21 @@ func get_enemy_by_id(enemy_id: int) -> EnemyData:
 	return null
 
 
+func add_common_event(name: String = "Common Event") -> CommonEventData:
+	var ce := CommonEventData.new()
+	ce.id = _next_id(common_events)
+	ce.name = name
+	common_events.append(ce)
+	return ce
+
+
+func get_common_event_by_id(ce_id: int) -> CommonEventData:
+	for ce in common_events:
+		if ce.id == ce_id:
+			return ce
+	return null
+
+
 func get_actor_by_id(actor_id: int) -> ActorData:
 	for a in actors:
 		if a.id == actor_id:
@@ -437,12 +454,16 @@ func serialize() -> Dictionary:
 		if d.get("graphic", null) is Dictionary:
 			d["graphic"]["source_path"] = make_project_relative(str(d["graphic"].get("source_path", "")))
 		actors_data.append(d)
+	var common_events_data: Array = []
+	for ce in common_events:
+		common_events_data.append(_serialize_common_event(ce))
 	return {
-		"version": 5,
+		"version": 6,
 		"maps": maps_data,
 		"tileset": tileset_data,
 		"player_graphic": _portable_graphic(player_graphic),
 		"system": system_settings.duplicate(true),
+		"common_events": common_events_data,
 		"database": {
 			"actors": actors_data,
 			"classes": _dicts(classes),
@@ -451,6 +472,36 @@ func serialize() -> Dictionary:
 			"enemies": _dicts(enemies),
 		},
 	}
+
+
+func _serialize_common_event(ce: CommonEventData) -> Dictionary:
+	var cmds: Array = []
+	for c in ce.commands:
+		cmds.append(_serialize_command(c))
+	return {
+		"id": ce.id,
+		"name": ce.name,
+		"trigger": CommonEventData.Trigger.keys()[ce.trigger],
+		"condition_switch_id": ce.condition_switch_id,
+		"commands": cmds,
+	}
+
+
+func _deserialize_common_event(data: Dictionary) -> CommonEventData:
+	var ce := CommonEventData.new()
+	ce.id = int(data.get("id", 0))
+	ce.name = str(data.get("name", "Common Event"))
+	var raw_trigger: Variant = data.get("trigger", 0)
+	if raw_trigger is String:
+		ce.trigger = CommonEventData.Trigger[raw_trigger] if CommonEventData.Trigger.has(raw_trigger) else CommonEventData.Trigger.NONE
+	else:
+		ce.trigger = int(raw_trigger) as CommonEventData.Trigger
+	ce.condition_switch_id = int(data.get("condition_switch_id", -1))
+	var cmds: Array[EventCommand] = []
+	for cmd_data in data.get("commands", []):
+		cmds.append(_deserialize_command(cmd_data))
+	ce.commands = cmds
+	return ce
 
 
 ## Graphic dict with its source_path made project-relative when possible.
@@ -499,6 +550,10 @@ func deserialize(data: Dictionary) -> void:
 		"starting_party": (sys as Dictionary).get("starting_party", []) if sys is Dictionary else [],
 		"starting_gold": int((sys as Dictionary).get("starting_gold", 0)) if sys is Dictionary else 0,
 	}
+	# Common events (added in version 6; absent in older projects → empty).
+	common_events.clear()
+	for ce_data in data.get("common_events", []):
+		common_events.append(_deserialize_common_event(ce_data))
 	# Database (added in version 3; absent in older projects → empty).
 	_deserialize_database(data.get("database", {}))
 	for map_data in data.get("maps", []):

@@ -42,6 +42,16 @@ func run_event(event: EventData) -> void:
 	_execute_next()
 
 
+## Run a raw command list (used for global common events — no owning event).
+## context_event, if given, supplies self-switch context.
+func run_commands(commands: Array, context_event: EventData = null) -> void:
+	_event = context_event
+	_frames = [_make_frame(commands, "root")]
+	_waiting = false
+	_stopped = false
+	_execute_next()
+
+
 func _make_frame(commands: Array, kind: String) -> Dictionary:
 	return { "commands": commands, "index": 0, "kind": kind }
 
@@ -144,6 +154,8 @@ func _execute_command(cmd: EventCommand) -> void:
 			_cmd_shop_processing(cmd.params)
 		EventCommand.Type.BATTLE_PROCESSING:
 			_cmd_battle_processing(cmd.params)
+		EventCommand.Type.CALL_COMMON_EVENT:
+			_cmd_call_common_event(cmd.params)
 		_:
 			_execute_next()
 
@@ -266,6 +278,20 @@ func _on_battle_finished(result: String, params: Dictionary) -> void:
 	# "flee" (or an empty win branch) just continues past the command.
 	if branch.size() > 0:
 		_push_frame(branch, "branch")
+	_execute_next()
+
+
+func _cmd_call_common_event(params: Dictionary) -> void:
+	var id: int = int(params.get("id", -1))
+	var ce := ProjectState.get_common_event_by_id(id)
+	if ce == null:
+		push_warning("[ER] CALL_COMMON_EVENT: no common event with id %d" % id)
+		_execute_next()
+		return
+	SignalBus.trace_common_event_called.emit(id)
+	# Run inline as a nested frame (the depth guard in _push_frame stops
+	# runaway recursion). If the guard rejects it, execution simply continues.
+	_push_frame(ce.commands, "call")
 	_execute_next()
 
 

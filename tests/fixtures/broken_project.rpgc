@@ -26,7 +26,8 @@
 								{ "type": 6, "params": { "letter": "Z", "value": true } },
 								{ "type": 15, "params": { "target": "npc", "steps": ["teleport"] } },
 								{ "type": "USE_ITEM", "params": { "item_id": 99, "actor_id": 0 } },
-								{ "type": "CHANGE_EQUIPMENT", "params": { "actor_id": 0, "slot": "belt", "equip_id": 42 } }
+								{ "type": "CHANGE_EQUIPMENT", "params": { "actor_id": 0, "slot": "belt", "equip_id": 42 } },
+								{ "type": "CALL_COMMON_EVENT", "params": { "id": 77 } }
 							]
 						}
 					]

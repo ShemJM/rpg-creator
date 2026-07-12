@@ -36,12 +36,13 @@ Written/read by `ProjectState.serialize()/deserialize()` (`scripts/autoloads/pro
 
 ```json
 {
-  "version": 5,
+  "version": 6,
   "maps": [ ... ],
   "tileset": [ ... ],          // optional — omit to get the default 5-tile set
   "player_graphic": null,      // optional charset; null = colored-block player
   "system": { "starting_party": [0], "starting_gold": 0 },  // optional
-  "database": { "actors": [], "classes": [], "items": [], "equipment": [] }
+  "common_events": [ ... ],    // optional — reusable command lists (see below)
+  "database": { "actors": [], "classes": [], "items": [], "equipment": [], "enemies": [] }
 }
 ```
 
@@ -112,8 +113,19 @@ Written/read by `ProjectState.serialize()/deserialize()` (`scripts/autoloads/pro
 | 20 | USE_ITEM | `{ "item_id": 0, "actor_id": 0 }` — applies the item's `effect` `{"hp": n, "mp": n}` restore; consumables decrement; no-op (traced `ok:false`) if out of stock |
 | 21 | SHOP_PROCESSING | `{ "entries": [ { "kind": "item"\|"equip", "id": 0, "price": 30 } ] }` — `price` optional (defaults to database price); sell price = floor(db price / 2); **blocks the event until the shop closes** — drive it with the `shop_buy`/`shop_sell`/`shop_close` scenario actions |
 | 22 | BATTLE_PROCESSING | `{ "enemies": [enemy_id, ...], "can_flee": true, "commands_win": [...], "commands_lose": [...] }` — blocks until the battle ends; `win` splices `commands_win`, `lose` splices `commands_lose` (**empty `commands_lose` = game over**), `flee` continues past the command |
+| 23 | CALL_COMMON_EVENT | `{ "id": 0 }` — runs the referenced common event's commands inline (reusable subroutine), then resumes; blocks if the common event has blocking commands |
 
 Follow-up branching after SHOW_CHOICES: the chosen index is written to **variable 0** — branch with CONDITIONAL_BRANCH on `condition_type: "variable"`. There are **100 switches and 100 variables** (ids 0–99), reset each play-test. Self-switches are per-event letters A–D.
+
+### Common events (reusable logic)
+
+Top-level `"common_events": [ { "id", "name", "trigger", "condition_switch_id", "commands": [...] } ]`. A common event is a shared command list:
+
+- `trigger: "NONE"` — runs only when invoked via `CALL_COMMON_EVENT { "id": n }` from any event (the reusable-subroutine case). Blocks the caller if it contains blocking commands.
+- `trigger: "PARALLEL"` — loops in the background while `condition_switch_id` holds (`-1` = always). Keep these to switch/variable/wait logic (no dialogue — same cross-talk caveat as parallel event pages).
+- `trigger: "AUTORUN"` — fires once (edge-triggered, non-blocking) when `condition_switch_id` turns on.
+
+Worked example: `games/common_event_demo.rpgc` (a "give gold" common called from two merchants + a parallel watcher that opens a vault at 50 gold).
 
 ### Database & party (live at runtime since v5)
 

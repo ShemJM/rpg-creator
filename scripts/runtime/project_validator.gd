@@ -36,7 +36,8 @@ const SCENARIO_ACTIONS := [
 	"snapshot",
 ]
 const DIRECTIONS := ["up", "down", "left", "right"]
-const SUPPORTED_VERSIONS := [1, 2, 3, 4, 5]
+const SUPPORTED_VERSIONS := [1, 2, 3, 4, 5, 6]
+const COMMON_EVENT_TRIGGERS := ["NONE", "AUTORUN", "PARALLEL"]
 
 
 static func validate_project(data: Dictionary) -> Array:
@@ -84,6 +85,14 @@ static func validate_project(data: Dictionary) -> Array:
 		seen_map_ids[_as_int(mid)] = true
 		map_bounds[_as_int(mid)] = Vector2i(_as_int(m.get("width", 0)), _as_int(m.get("height", 0)))
 
+	# Common-event ids, so CALL_COMMON_EVENT can cross-reference them.
+	var common_event_ids: Dictionary = {}
+	var raw_commons: Variant = data.get("common_events", [])
+	if raw_commons is Array:
+		for ce in raw_commons:
+			if ce is Dictionary and _is_int((ce as Dictionary).get("id", null)):
+				common_event_ids[_as_int(ce["id"])] = true
+
 	# Database id sets, so commands can cross-reference them.
 	var db: Variant = data.get("database", {})
 	var ctx: Dictionary = {
@@ -92,11 +101,14 @@ static func validate_project(data: Dictionary) -> Array:
 		"item_ids": _collect_ids(db, "items"),
 		"equip_ids": _collect_ids(db, "equipment"),
 		"enemy_ids": _collect_ids(db, "enemies"),
+		"common_event_ids": common_event_ids,
 	}
 
 	for i in range(maps.size()):
 		if maps[i] is Dictionary:
 			_validate_map(errors, maps[i], "maps[%d]" % i, tile_ids, ctx)
+
+	_validate_common_events(errors, raw_commons, ctx)
 
 	if db is Dictionary:
 		_validate_database(errors, db)
@@ -115,6 +127,38 @@ static func _collect_ids(db: Variant, table: String) -> Dictionary:
 			if entry is Dictionary and _is_int((entry as Dictionary).get("id", null)):
 				ids[_as_int(entry["id"])] = true
 	return ids
+
+
+static func _validate_common_events(errors: Array, raw: Variant, ctx: Dictionary) -> void:
+	if raw == null:
+		return
+	if not raw is Array:
+		_err(errors, "common_events", "must be an array")
+		return
+	var seen: Dictionary = {}
+	for i in range((raw as Array).size()):
+		var ce: Variant = raw[i]
+		var path := "common_events[%d]" % i
+		if not ce is Dictionary:
+			_err(errors, path, "common event must be an object")
+			continue
+		var id: Variant = (ce as Dictionary).get("id", null)
+		if not _is_int(id):
+			_err(errors, "%s.id" % path, "missing or non-integer id")
+		elif seen.has(_as_int(id)):
+			_err(errors, "%s.id" % path, "duplicate common event id %d" % _as_int(id))
+		else:
+			seen[_as_int(id)] = true
+		var trigger: Variant = (ce as Dictionary).get("trigger", "NONE")
+		if not (_is_int(trigger) or COMMON_EVENT_TRIGGERS.has(str(trigger))):
+			_err(errors, "%s.trigger" % path, "trigger must be one of %s" % str(COMMON_EVENT_TRIGGERS))
+		var cmds: Variant = (ce as Dictionary).get("commands", [])
+		if not cmds is Array:
+			_err(errors, "%s.commands" % path, "must be an array")
+			continue
+		var labels: Dictionary = {}
+		_collect_labels(cmds, labels)
+		_validate_commands(errors, cmds, "%s.commands" % path, ctx, labels)
 
 
 static func _validate_system(errors: Array, sys: Variant, ctx: Dictionary) -> void:
@@ -383,6 +427,10 @@ static func _validate_params(errors: Array, ctype: int, params: Dictionary, cpat
 				_err(errors, "%s.params.item_id" % cpath, "unknown item id: %s" % str(params.get("item_id")))
 			if not ctx["actor_ids"].has(_as_int(params.get("actor_id", -1))):
 				_err(errors, "%s.params.actor_id" % cpath, "unknown actor id: %s" % str(params.get("actor_id")))
+
+		EventCommand.Type.CALL_COMMON_EVENT:
+			if not ctx["common_event_ids"].has(_as_int(params.get("id", -1))):
+				_err(errors, "%s.params.id" % cpath, "unknown common event id: %s" % str(params.get("id")))
 
 		EventCommand.Type.BATTLE_PROCESSING:
 			var bp_enemies: Variant = params.get("enemies", null)

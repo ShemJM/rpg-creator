@@ -25,6 +25,8 @@ var _parallel_runners: Dictionary = {}    # event_id -> EventRunner
 var _last_active_pages: Dictionary = {}   # event_id -> active page index (-1 = none)
 var _pending_autoruns: Array = []         # EventData queued while another event runs
 var _refresh_queued: bool = false
+var _common_runners: Dictionary = {}      # common_event_id -> EventRunner (parallel)
+var _last_common_active: Dictionary = {}  # common_event_id -> bool (autorun edge state)
 
 
 func _ready() -> void:
@@ -67,6 +69,7 @@ func _ready() -> void:
 	_init_page_tracking()
 	_check_autorun_events()
 	_refresh_parallel_events()
+	_refresh_common_events()
 
 
 func _build_map(map: MapData) -> void:
@@ -374,6 +377,10 @@ func _on_transfer(map_id: int, x: int, y: int) -> void:
 	if target_map == null:
 		return
 	_stop_parallel_runners()
+	# Global common-event runners are rebuilt for the new map; their effects
+	# live in GameState, and _last_common_active survives so autorun commons
+	# don't re-fire across a transfer.
+	_stop_common_runners()
 	_event_visuals.clear()
 	_last_active_pages.clear()
 	_pending_autoruns.clear()
@@ -391,6 +398,7 @@ func _on_transfer(map_id: int, x: int, y: int) -> void:
 	_init_page_tracking()
 	_check_autorun_events()
 	_refresh_parallel_events()
+	_refresh_common_events()
 
 
 # ---------------------------------------------------------------------------
@@ -441,6 +449,7 @@ func _refresh_events() -> void:
 				else:
 					_run_event(ev)
 	_refresh_parallel_events()
+	_refresh_common_events()
 
 
 func _refresh_parallel_events() -> void:
@@ -488,6 +497,72 @@ func _stop_parallel_runners() -> void:
 		var runner: EventRunner = _parallel_runners[event_id]
 		runner.stop()
 		runner.queue_free()
+
+
+# ---------------------------------------------------------------------------
+# Global common events (autorun / parallel; NONE-trigger commons only run when
+# invoked via CALL_COMMON_EVENT and are handled inline by the event runner).
+# ---------------------------------------------------------------------------
+
+func _common_condition_met(ce: CommonEventData) -> bool:
+	return ce.condition_switch_id < 0 or GameState.get_switch(ce.condition_switch_id)
+
+
+func _refresh_common_events() -> void:
+	for ce: CommonEventData in ProjectState.common_events:
+		var on: bool = _common_condition_met(ce)
+		match ce.trigger:
+			CommonEventData.Trigger.PARALLEL:
+				if on and not _common_runners.has(ce.id):
+					_start_common_runner(ce)
+				elif not on and _common_runners.has(ce.id):
+					_stop_common_runner(ce.id)
+			CommonEventData.Trigger.AUTORUN:
+				# Edge-triggered: fire once (non-blocking) when the switch turns on.
+				if on and not _last_common_active.get(ce.id, false):
+					var runner := EventRunner.new()
+					add_child(runner)
+					runner.finished.connect(func(): runner.queue_free())
+					runner.run_commands(ce.commands)
+				_last_common_active[ce.id] = on
+
+
+func _start_common_runner(ce: CommonEventData) -> void:
+	var runner := EventRunner.new()
+	add_child(runner)
+	_common_runners[ce.id] = runner
+	runner.finished.connect(_on_common_finished.bind(ce, runner))
+	runner.run_commands(ce.commands)
+
+
+func _on_common_finished(ce: CommonEventData, runner: EventRunner) -> void:
+	# Parallel commons loop while their condition holds; restart next idle frame.
+	_restart_common.call_deferred(ce, runner)
+
+
+func _restart_common(ce: CommonEventData, runner: EventRunner) -> void:
+	if _common_runners.get(ce.id) != runner:
+		return  # Stopped/replaced in the meantime.
+	if ce.trigger == CommonEventData.Trigger.PARALLEL and _common_condition_met(ce):
+		runner.run_commands(ce.commands)
+	else:
+		_stop_common_runner(ce.id)
+
+
+func _stop_common_runner(ce_id: int) -> void:
+	var runner: EventRunner = _common_runners.get(ce_id)
+	if runner:
+		runner.stop()
+		runner.queue_free()
+		_common_runners.erase(ce_id)
+
+
+func _stop_common_runners() -> void:
+	for ce_id in _common_runners.keys():
+		var runner: EventRunner = _common_runners[ce_id]
+		runner.stop()
+		runner.queue_free()
+	_common_runners.clear()
 	_parallel_runners.clear()
 
 

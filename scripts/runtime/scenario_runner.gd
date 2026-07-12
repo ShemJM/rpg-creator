@@ -89,6 +89,8 @@ func setup(runtime: RuntimePlayer, is_headless: bool = false) -> void:
 		_trace.append({ "type": "battle_action", "actor": actor, "action": action, "target": target, "amount": amount, "target_hp_left": hp_left }))
 	SignalBus.trace_battle_ended.connect(func(result: String, gold_reward: int, item_rewards: Array) -> void:
 		_trace.append({ "type": "battle_ended", "result": result, "gold_reward": gold_reward, "item_rewards": item_rewards.duplicate(true) }))
+	SignalBus.trace_common_event_called.connect(func(id: int) -> void:
+		_trace.append({ "type": "common_event_called", "id": id }))
 
 
 func run_from_file(path: String) -> void:

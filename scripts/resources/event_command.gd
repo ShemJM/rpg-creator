@@ -28,6 +28,7 @@ enum Type {
 	USE_ITEM,
 	SHOP_PROCESSING,
 	BATTLE_PROCESSING,
+	CALL_COMMON_EVENT,
 }
 
 @export var type: Type = Type.SHOW_TEXT
@@ -68,6 +69,8 @@ enum Type {
 ##                      "commands_win": [EventCommand...], "commands_lose": [EventCommand...] }
 ##   Blocks until the battle ends. win -> commands_win; lose -> commands_lose,
 ##   or game over when commands_lose is empty; flee -> continue past the command.
+## CALL_COMMON_EVENT: { "id": 0 } — runs the common event's commands inline,
+##   then resumes; shares the caller's self-switch context.
 @export var params: Dictionary = {}
 
 
@@ -228,4 +231,11 @@ static func make_battle_processing(enemy_ids: Array, can_flee: bool = true) -> E
 	var cmd := EventCommand.new()
 	cmd.type = Type.BATTLE_PROCESSING
 	cmd.params = { "enemies": enemy_ids, "can_flee": can_flee, "commands_win": [], "commands_lose": [] }
+	return cmd
+
+
+static func make_call_common_event(id: int) -> EventCommand:
+	var cmd := EventCommand.new()
+	cmd.type = Type.CALL_COMMON_EVENT
+	cmd.params = { "id": id }
 	return cmd

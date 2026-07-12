@@ -84,3 +84,4 @@ signal trace_battle_round(round_number: int)
 ## actor/target encoded "party:<actor_id>" / "enemy:<index>"; amount is damage or heal.
 signal trace_battle_action(actor: String, action: String, target: String, amount: int, target_hp_left: int)
 signal trace_battle_ended(result: String, gold_reward: int, item_rewards: Array)
+signal trace_common_event_called(id: int)
