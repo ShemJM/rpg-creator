@@ -56,18 +56,17 @@ This document describes the planned interface surface for agent-driven game crea
 
 ## Headless Usage
 
+Prefer the Makefile wrappers (`make test`, `make run-scenario S=...`, `make list-maps P=...`). Raw invocations (user args after `--` divert StartScreen into the headless runner — `--script` mode can't be used because autoloads only exist in a normal project run):
+
 ```
 # List maps in a project
-Godot_v4.x --headless --path . --script scripts/runtime/headless_runner.gd \
-  -- --project games/test.rpgm --list-maps
+godot --headless --path . -- --project games/test.rpgm --list-maps
 
 # List the project database (actors/classes/items/weapons/armor)
-Godot_v4.x --headless --path . --script scripts/runtime/headless_runner.gd \
-  -- --project games/database_test.rpgc --list-database
+godot --headless --path . -- --project games/database_test.rpgc --list-database
 
 # Run a scenario file
-Godot_v4.x --headless --path . --script scripts/runtime/headless_runner.gd \
-  -- --project games/test.rpgm --scenario games/test_scenario.json
+godot --headless --path . -- --scenario games/test_scenario.json
 ```
 
 Exit codes: `0` = all assertions passed, `1` = assertion failures, `2` = fatal error.
@@ -113,7 +112,16 @@ Exit codes: `0` = all assertions passed, `1` = assertion failures, `2` = fatal e
 
 ---
 
-## MCP Tool Surface (Planned)
+## MCP Tool Surface (Deferred)
+
+> **Decision (2026-07): CLI-first.** Claude Code (the primary agent client)
+> authors games by editing project JSON directly and tests them via the
+> headless runner + Makefile — see `CLAUDE.md`. That covers the MCP tool
+> surface below without a sidecar process. MCP remains a possible later
+> addition for other agent clients; its one unique capability (a persistent
+> interactive runtime session) is planned instead as a JSONL
+> `--interactive` mode on the headless runner, which an MCP server could
+> wrap thinly if ever needed.
 
 The MCP server should be a thin wrapper over the service APIs. It does NOT touch scene nodes or UI directly.
 
@@ -145,6 +153,12 @@ The MCP server should be a thin wrapper over the service APIs. It does NOT touch
 | `trace_read` | — | `[trace events since last call]` |
 
 ### Command Shape (for `event_append_command`)
+
+> **On-disk note:** project files currently serialize `type` as the integer
+> ordinal of `EventCommand.Type` and page `trigger` as the ordinal of
+> `EventPage.Trigger` (schema v3). Schema v4 will move to the string forms
+> shown here, keeping integer values loadable for backward compatibility.
+> The complete per-type param reference lives in `CLAUDE.md`.
 
 ```json
 { "type": "SHOW_TEXT",        "params": { "lines": ["Hello!"], "name": "NPC" } }
@@ -197,6 +211,6 @@ All signals defined in `SignalBus`. Collected automatically by `ScenarioRunner`.
 | 3 — Authoring service | `ProjectState` service methods | ✅ Done |
 | 4 — Scenario runner | JSON scenario → assertions + trace | ✅ Done |
 | 5 — Headless entrypoint | CLI launcher with exit codes | ✅ Done |
-| 6 — MCP sidecar | Python/Node MCP server wrapping phases 1–5 | 🔲 Planned |
-| 7 — CI integration | GitHub Actions workflow running scenarios | 🔲 Planned |
-| 8 — Visual smoke tests | Screenshot capture for layout checks | 🔲 Planned |
+| 6 — MCP sidecar | Python/Node MCP server wrapping phases 1–5 | ⏸ Deferred (CLI-first — see above) |
+| 7 — CI integration | GitHub Actions workflow running scenarios | ✅ Done (`.github/workflows/test.yml`) |
+| 8 — Visual smoke tests | Screenshot capture for layout checks | 🔲 Planned (needs non-headless renderer) |

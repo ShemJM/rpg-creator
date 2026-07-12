@@ -1,20 +1,15 @@
 extends Node
 ## Headless entry point for agent / CI use.
 ##
-## Launch with the standard Godot GUI binary (--headless disables the window):
+## The project must run normally so autoload singletons (ProjectState etc.)
+## exist — godot --script mode does not register them. StartScreen detects
+## user args and hosts this runner instead of building its UI:
 ##
-##   Godot_v4.6.2-stable_win64.exe --headless --path . ^
-##     --script scripts/runtime/headless_runner.gd ^
-##     -- --project games/my.rpgm --scenario games/test.json --output results.json
+##   godot --headless --path . -- --project games/my.rpgm \
+##     --scenario games/test.json --output results.json
 ##
-## Or with the console binary (Godot_v4.x_console.exe) for live stdout:
-##
-##   Godot_v4.6.2-stable_win64_console.exe --headless --path . ^
-##     --script scripts/runtime/headless_runner.gd ^
-##     -- --project games/my.rpgm --scenario games/test.json
-##
-## --output <path>  Write JSON results to this file (works with GUI binary).
-##                  If omitted, results are only printed to stdout (console binary).
+## --output <path>  Write JSON results to this file.
+##                  If omitted, results are only printed to stdout.
 ##
 ## Exit codes:
 ##   0  all assertions passed (or no assertions)

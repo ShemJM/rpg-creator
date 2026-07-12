@@ -3,7 +3,7 @@
 # source of truth for how the headless runner is invoked.
 
 GODOT ?= $(shell [ -x bin/godot ] && echo bin/godot || command -v godot || command -v godot4)
-RUNNER := --headless --path . --script scripts/runtime/headless_runner.gd --
+RUNNER := --headless --path . --
 TIMEOUT ?= 120
 
 SCENARIOS := $(wildcard games/*_scenario.json)
