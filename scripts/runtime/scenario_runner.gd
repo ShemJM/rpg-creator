@@ -53,14 +53,14 @@ func setup(runtime: RuntimePlayer, is_headless: bool = false) -> void:
 
 func run_from_file(path: String) -> void:
 	if not FileAccess.file_exists(path):
-		push_error("[Scenario] File not found: %s" % path)
+		_record_assertion(false, "scenario file not found: %s" % path)
 		_finish()
 		return
 	var file := FileAccess.open(path, FileAccess.READ)
 	var parsed = JSON.parse_string(file.get_as_text())
 	file.close()
 	if not parsed is Dictionary:
-		push_error("[Scenario] Invalid JSON: %s" % path)
+		_record_assertion(false, "scenario file is not valid JSON: %s" % path)
 		_finish()
 		return
 	run_from_dict(parsed)
@@ -71,9 +71,14 @@ func run_from_dict(data: Dictionary) -> void:
 	var project_path: String = data.get("project", "")
 	if not project_path.is_empty():
 		if not ProjectState.load_from(project_path):
-			push_error("[Scenario] Could not load project: %s" % project_path)
+			# Recorded as a failed assertion so headless runs exit 1, not 0.
+			_record_assertion(false, "could not load project: %s" % project_path)
 			_finish()
 			return
+	elif ProjectState.maps.is_empty():
+		_record_assertion(false, "no project loaded and scenario has no \"project\" key")
+		_finish()
+		return
 
 	# Optionally switch start map.
 	var start_map_id: int = data.get("start_map_id", -1)

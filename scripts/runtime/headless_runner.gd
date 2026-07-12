@@ -53,13 +53,14 @@ func _ready() -> void:
 	var list_maps: bool       = "--list-maps" in args
 	var list_database: bool   = "--list-database" in args
 
-	# Load project if given.
+	# Load project if given. A scenario may instead name its own project
+	# (the "project" key), so only the list operations hard-require --project.
 	if not project_path.is_empty():
 		if not ProjectState.load_from(project_path):
 			push_error("[Headless] Could not load project: %s" % project_path)
 			get_tree().quit(2)
 			return
-	elif ProjectState.maps.is_empty():
+	elif (list_maps or list_database) and ProjectState.maps.is_empty():
 		push_error("[Headless] No project loaded. Use --project <path>.")
 		get_tree().quit(2)
 		return
