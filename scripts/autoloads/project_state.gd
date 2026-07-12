@@ -24,21 +24,49 @@ func _ready() -> void:
 	tileset = TileDef.get_stub_tileset()
 
 
-## Load and cache a texture from an absolute path. Returns null if missing/invalid.
-## Shared by tiles and character graphics.
+## Load and cache a texture. Shared by tiles and character graphics.
+## Accepts absolute paths, res://-style paths, and paths relative to the
+## project file's folder (the portable form). Returns null if missing/invalid.
 func load_texture(path: String) -> Texture2D:
 	if path.is_empty():
 		return null
-	if _texture_cache.has(path):
-		return _texture_cache[path]
-	if not FileAccess.file_exists(path):
+	var resolved := resolve_asset_path(path)
+	if _texture_cache.has(resolved):
+		return _texture_cache[resolved]
+	if not FileAccess.file_exists(resolved):
 		return null
-	var img := Image.load_from_file(path)
+	var img := Image.load_from_file(resolved)
 	if img == null:
 		return null
 	var tex := ImageTexture.create_from_image(img)
-	_texture_cache[path] = tex
+	_texture_cache[resolved] = tex
 	return tex
+
+
+## Resolve an asset path stored in a project file: absolute passes through,
+## res://user:// globalizes, anything else is relative to the project file.
+func resolve_asset_path(path: String) -> String:
+	if path.is_empty():
+		return path
+	if path.begins_with("res://") or path.begins_with("user://"):
+		return ProjectSettings.globalize_path(path)
+	if path.is_absolute_path():
+		return path
+	var base := current_project_path.get_base_dir()
+	if base.is_empty():
+		return path
+	return (base + "/" + path).simplify_path()
+
+
+## Inverse of resolve_asset_path for saving: store paths relative to the
+## project file when the asset lives beside it, so projects stay portable.
+func make_project_relative(path: String) -> String:
+	if path.is_empty() or current_project_path.is_empty():
+		return path
+	var base := current_project_path.get_base_dir()
+	if not base.is_empty() and path.begins_with(base + "/"):
+		return path.substr(base.length() + 1)
+	return path
 
 
 func get_tile_texture(tile_def: TileDef) -> Texture2D:
@@ -335,9 +363,11 @@ func save(path: String = "") -> void:
 	if file == null:
 		push_error("ProjectState.save: could not open file: %s" % path)
 		return
+	# Set the path before serializing so asset paths relativize against the
+	# folder actually being saved into (matters for save-as).
+	current_project_path = path
 	file.store_string(JSON.stringify(serialize(), "\t"))
 	file.close()
-	current_project_path = path
 	_add_to_recent(path)
 	SignalBus.project_saved.emit(path)
 
@@ -375,21 +405,36 @@ func serialize() -> Dictionary:
 			"tile_name": t.tile_name,
 			"color": [t.color.r, t.color.g, t.color.b, t.color.a],
 			"passable": t.passable,
-			"source_path": t.source_path,
+			"source_path": make_project_relative(t.source_path),
 			"region": [t.region.position.x, t.region.position.y, t.region.size.x, t.region.size.y],
 		})
+	var actors_data: Array = []
+	for a in actors:
+		var d: Dictionary = a.to_dict()
+		if d.get("graphic", null) is Dictionary:
+			d["graphic"]["source_path"] = make_project_relative(str(d["graphic"].get("source_path", "")))
+		actors_data.append(d)
 	return {
 		"version": 4,
 		"maps": maps_data,
 		"tileset": tileset_data,
-		"player_graphic": player_graphic.to_dict() if player_graphic else null,
+		"player_graphic": _portable_graphic(player_graphic),
 		"database": {
-			"actors": _dicts(actors),
+			"actors": actors_data,
 			"classes": _dicts(classes),
 			"items": _dicts(items),
 			"equipment": _dicts(equipment),
 		},
 	}
+
+
+## Graphic dict with its source_path made project-relative when possible.
+func _portable_graphic(g: CharacterGraphic) -> Variant:
+	if g == null:
+		return null
+	var d := g.to_dict()
+	d["source_path"] = make_project_relative(str(d.get("source_path", "")))
+	return d
 
 
 ## Map an array of resources (each with to_dict()) to an array of dictionaries.
@@ -488,7 +533,7 @@ func _serialize_page(page: EventPage) -> Dictionary:
 	return {
 		"trigger": EventPage.Trigger.keys()[page.trigger],
 		"graphic_color": [page.graphic_color.r, page.graphic_color.g, page.graphic_color.b, page.graphic_color.a],
-		"graphic": page.graphic.to_dict() if page.graphic else null,
+		"graphic": _portable_graphic(page.graphic),
 		"condition_switch_id": page.condition_switch_id,
 		"condition_switch_value": page.condition_switch_value,
 		"condition_self_switch": page.condition_self_switch,

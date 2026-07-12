@@ -153,7 +153,7 @@ Results JSON: `{ passed, failed, total, assertions: [{pass, message}], trace: [.
 ## Gotchas
 
 - **JSON only** — don't hand-write `.tscn`/`.tres` for game content; everything lives in the project file.
-- Charset `source_path` is an absolute path today — **omit `graphic`/`player_graphic` (null)** for agent-built games; the colored-block fallback works everywhere including headless.
+- Charset/tileset `source_path` should be **relative to the project file** (e.g. `assets/hero.png` next to the `.rpgc`) so games stay portable; absolute and `res://` paths also load. Simplest for agent-built games: **omit `graphic`/`player_graphic` (null)** — the colored-block fallback works everywhere including headless.
 - Parallel pages that show dialogue can cross-talk with blocking events — keep parallel pages to switch/variable/wait/move logic.
 - A scenario with zero `expect_*` steps exits 0 — always assert something.
 - Editor UI code (`scripts/editor/`, `scenes/editor/`) is irrelevant to agent workflows; the runtime lives in `scripts/runtime/`.
