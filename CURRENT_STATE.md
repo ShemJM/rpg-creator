@@ -1,6 +1,6 @@
 # Current State
 
-> Last updated: 2026-07-08
+> Last updated: 2026-07-12
 
 ## What works
 
@@ -40,17 +40,23 @@
 
 ### Infrastructure
 
-- `ProjectState` autoload holds all map/event data in memory and serializes it to JSON (`.rpgc`); save/load with a start screen and recent-projects list; also exposes an authoring service API for agents/tests. Project schema is at `version` 2 (adds character graphics; v1 projects load with null-graphic fallback).
+- `ProjectState` autoload holds all map/event data in memory and serializes it to JSON (`.rpgc`); save/load with a start screen and recent-projects list; also exposes an authoring service API for agents/tests. Project schema is at `version` 4 — command types and page triggers serialize as enum-name strings; older integer-typed files (v1–v3) still load, and `--resave` migrates them. Asset paths may be project-relative (portable), absolute, or `res://`.
 - `GameState` autoload manages runtime switches/variables.
 - `SignalBus` wires editor ↔ runtime events without direct coupling.
 - `DesignTokens` + `ThemeBuilder` provide a consistent dark UI theme.
+
+### Agent workflow (see CLAUDE.md)
+
+- **Headless CLI** — `godot --headless --path . -- <flags>` runs scenarios, validates project/scenario files (`--validate`), runs the whole suite in one boot (`--test-all`), migrates schemas (`--resave`), and lists maps/database. `Makefile` wraps the canonical commands; `scripts/setup-godot.sh` bootstraps a Godot binary (auto-run by a Claude Code SessionStart hook).
+- **Scenario tests** — JSON playthroughs with assertions (position, facing, switches, variables, dialogue content, event erasure, game over) plus a timeout watchdog; full structured trace + snapshot output for debugging.
+- **Validator** — `scripts/runtime/project_validator.gd` lints raw project/scenario JSON with precise path+message errors before anything runs.
+- **CI** — `.github/workflows/test.yml` runs `make test` on every push.
 
 ## Known gaps / rough edges
 
 - **`PLAY_SE` is a stub** — advances immediately with no audio playback (no BGM/SE yet).
 - **Database is authoring-only** — actors/classes/items/weapons/armor are stored but not yet consumed at runtime (party, inventory, shops, and combat come in later phases). No skills/enemies/troops yet.
 - **No party / inventory / combat** — `GameState` still holds only switches/variables; no party, gold, inventory, or battle system yet.
-- **Charsets are absolute paths** — event/player graphics reference images by absolute path, so projects aren't yet portable across machines.
 - **Map transfer UX** — Transfer Player command works at runtime but there is no editor UI for picking the target map by name.
 - **Parallel events + dialogue** — a parallel event showing text while a blocking event also waits on dialogue can cross-talk; parallel pages are best used for switch/variable/wait/move logic.
 - **No undo/redo** in the editor.
