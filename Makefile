@@ -10,7 +10,7 @@ SCENARIOS := $(wildcard games/*_scenario.json)
 
 PROJECTS := $(wildcard games/*.rpgm) $(wildcard games/*.rpgc)
 
-.PHONY: help setup test test-scenarios test-database test-validator validate validate-all run-scenario list-maps list-database
+.PHONY: help setup test test-scenarios test-database test-validator test-legacy validate validate-all run-scenario list-maps list-database
 
 help:
 	@echo "make setup                              # install/locate Godot (bin/godot)"
@@ -24,7 +24,11 @@ help:
 setup:
 	bash scripts/setup-godot.sh
 
-test: validate-all test-validator test-scenarios test-database
+test: validate-all test-validator test-scenarios test-legacy test-database
+
+# Pre-v4 project files (integer command types/triggers) must keep loading.
+test-legacy:
+	timeout $(TIMEOUT) $(GODOT) $(RUNNER) --scenario tests/fixtures/legacy_scenario.json
 
 # The validator must reject a deliberately broken project (exit 1, not 0/2).
 test-validator:

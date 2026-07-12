@@ -1,5 +1,5 @@
 {
-	"version": 4,
+	"version": 2,
 	"maps": [
 		{
 			"id": 0,
@@ -42,7 +42,7 @@
 					"y": 2,
 					"pages": [
 						{
-							"trigger": "ACTION_BUTTON",
+							"trigger": 0,
 							"graphic_color": [
 								0.2,
 								0.6,
@@ -57,7 +57,7 @@
 							"condition_variable_gte": 0,
 							"commands": [
 								{
-									"type": "CONTROL_SWITCHES",
+									"type": 2,
 									"params": {
 										"ids": [
 											1

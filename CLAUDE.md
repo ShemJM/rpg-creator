@@ -36,7 +36,7 @@ Written/read by `ProjectState.serialize()/deserialize()` (`scripts/autoloads/pro
 
 ```json
 {
-  "version": 3,
+  "version": 4,
   "maps": [ ... ],
   "tileset": [ ... ],          // optional — omit to get the default 5-tile set
   "player_graphic": null,      // optional charset; null = colored-block player
@@ -66,25 +66,25 @@ Written/read by `ProjectState.serialize()/deserialize()` (`scripts/autoloads/pro
   "id": 0, "event_name": "Old Man", "x": 5, "y": 4,
   "pages": [
     {
-      "trigger": 0,
+      "trigger": "ACTION_BUTTON",
       "graphic_color": [0.8, 0.2, 0.2, 1.0],
       "graphic": null,
       "condition_switch_id": -1, "condition_switch_value": true,
       "condition_self_switch": "", "condition_variable_id": -1, "condition_variable_gte": 0,
-      "commands": [ { "type": 0, "params": { "lines": ["Hello!"], "name": "Old Man" } } ]
+      "commands": [ { "type": "SHOW_TEXT", "params": { "lines": ["Hello!"], "name": "Old Man" } } ]
     }
   ]
 }
 ```
 
 - Event `id` must be unique within its map. Events sit on the map grid; an event with commands blocks movement onto its tile for Action Button triggers.
-- `trigger`: `0` Action Button (player presses interact while facing it), `1` Player Touch, `2` Autorun (fires when page becomes active), `3` Parallel (loops in background).
+- `trigger`: `"ACTION_BUTTON"` (player presses interact while facing it), `"PLAYER_TOUCH"`, `"AUTORUN"` (fires when page becomes active), `"PARALLEL"` (loops in background). Legacy integer ordinals (0–3) also load.
 - Page conditions all default to "none" (`-1` / `""`). The **last** page whose conditions hold is the active one. `condition_variable_gte` means variable ≥ value.
 - `graphic_color` is a float RGBA array (0–1).
 
 ### Command types
 
-`"type"` is the **integer ordinal** of `EventCommand.Type` (`scripts/resources/event_command.gd`):
+`"type"` is the **enum name string** from `EventCommand.Type` (`scripts/resources/event_command.gd`). Legacy integer ordinals (the `#` column) also load — schema v3 and earlier used them.
 
 | # | Type | params |
 |---|------|--------|

@@ -1,5 +1,5 @@
 {
-	"version": 1,
+	"version": 4,
 	"maps": [
 		{
 			"id": 0,
@@ -317,7 +317,7 @@
 					"y": 7,
 					"pages": [
 						{
-							"trigger": 0,
+							"trigger": "ACTION_BUTTON",
 							"graphic_color": [
 								0.9,
 								0.3,
@@ -331,13 +331,13 @@
 							"condition_variable_gte": 0,
 							"commands": [
 								{
-									"type": 12,
+									"type": "LABEL",
 									"params": {
 										"name": "top"
 									}
 								},
 								{
-									"type": 3,
+									"type": "CONTROL_VARIABLES",
 									"params": {
 										"ids": [
 											1
@@ -347,14 +347,14 @@
 									}
 								},
 								{
-									"type": 4,
+									"type": "CONDITIONAL_BRANCH",
 									"params": {
 										"condition_type": "variable_gte",
 										"id": 1,
 										"value": 3,
 										"commands_if": [
 											{
-												"type": 2,
+												"type": "CONTROL_SWITCHES",
 												"params": {
 													"ids": [
 														2
@@ -365,7 +365,7 @@
 										],
 										"commands_else": [
 											{
-												"type": 13,
+												"type": "JUMP_TO_LABEL",
 												"params": {
 													"name": "top"
 												}
@@ -384,7 +384,7 @@
 					"y": 8,
 					"pages": [
 						{
-							"trigger": 0,
+							"trigger": "ACTION_BUTTON",
 							"graphic_color": [
 								0.3,
 								0.9,
@@ -398,11 +398,11 @@
 							"condition_variable_gte": 0,
 							"commands": [
 								{
-									"type": 11,
+									"type": "ERASE_EVENT",
 									"params": {}
 								},
 								{
-									"type": 2,
+									"type": "CONTROL_SWITCHES",
 									"params": {
 										"ids": [
 											3
@@ -421,7 +421,7 @@
 					"y": 10,
 					"pages": [
 						{
-							"trigger": 0,
+							"trigger": "ACTION_BUTTON",
 							"graphic_color": [
 								0.3,
 								0.3,
@@ -435,7 +435,7 @@
 							"condition_variable_gte": 0,
 							"commands": [
 								{
-									"type": 15,
+									"type": "MOVE_ROUTE",
 									"params": {
 										"target": "this",
 										"steps": [
@@ -446,7 +446,7 @@
 									}
 								},
 								{
-									"type": 15,
+									"type": "MOVE_ROUTE",
 									"params": {
 										"target": "player",
 										"steps": [
@@ -456,7 +456,7 @@
 									}
 								},
 								{
-									"type": 2,
+									"type": "CONTROL_SWITCHES",
 									"params": {
 										"ids": [
 											4
@@ -475,7 +475,7 @@
 					"y": 3,
 					"pages": [
 						{
-							"trigger": 0,
+							"trigger": "ACTION_BUTTON",
 							"graphic_color": [
 								0.5,
 								0.5,
@@ -490,7 +490,7 @@
 							"commands": []
 						},
 						{
-							"trigger": 3,
+							"trigger": "PARALLEL",
 							"graphic_color": [
 								0.9,
 								0.9,
@@ -504,7 +504,7 @@
 							"condition_variable_gte": 0,
 							"commands": [
 								{
-									"type": 3,
+									"type": "CONTROL_VARIABLES",
 									"params": {
 										"ids": [
 											2
@@ -514,7 +514,7 @@
 									}
 								},
 								{
-									"type": 2,
+									"type": "CONTROL_SWITCHES",
 									"params": {
 										"ids": [
 											5
@@ -533,7 +533,7 @@
 					"y": 7,
 					"pages": [
 						{
-							"trigger": 0,
+							"trigger": "ACTION_BUTTON",
 							"graphic_color": [
 								0.9,
 								0.5,
@@ -547,7 +547,7 @@
 							"condition_variable_gte": 0,
 							"commands": [
 								{
-									"type": 2,
+									"type": "CONTROL_SWITCHES",
 									"params": {
 										"ids": [
 											5
@@ -556,19 +556,19 @@
 									}
 								},
 								{
-									"type": 9,
+									"type": "FADE_OUT",
 									"params": {
 										"duration": 0.2
 									}
 								},
 								{
-									"type": 10,
+									"type": "FADE_IN",
 									"params": {
 										"duration": 0.2
 									}
 								},
 								{
-									"type": 2,
+									"type": "CONTROL_SWITCHES",
 									"params": {
 										"ids": [
 											6

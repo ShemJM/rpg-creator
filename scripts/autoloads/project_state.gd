@@ -379,7 +379,7 @@ func serialize() -> Dictionary:
 			"region": [t.region.position.x, t.region.position.y, t.region.size.x, t.region.size.y],
 		})
 	return {
-		"version": 3,
+		"version": 4,
 		"maps": maps_data,
 		"tileset": tileset_data,
 		"player_graphic": player_graphic.to_dict() if player_graphic else null,
@@ -486,7 +486,7 @@ func _serialize_page(page: EventPage) -> Dictionary:
 	for cmd in page.commands:
 		cmds.append(_serialize_command(cmd))
 	return {
-		"trigger": page.trigger,
+		"trigger": EventPage.Trigger.keys()[page.trigger],
 		"graphic_color": [page.graphic_color.r, page.graphic_color.g, page.graphic_color.b, page.graphic_color.a],
 		"graphic": page.graphic.to_dict() if page.graphic else null,
 		"condition_switch_id": page.condition_switch_id,
@@ -504,7 +504,7 @@ func _serialize_command(cmd: EventCommand) -> Dictionary:
 		params["commands_if"] = _serialize_command_array(params["commands_if"])
 	if params.has("commands_else"):
 		params["commands_else"] = _serialize_command_array(params["commands_else"])
-	return { "type": cmd.type, "params": params }
+	return { "type": EventCommand.Type.keys()[cmd.type], "params": params }
 
 
 func _serialize_command_array(cmds: Array) -> Array:
@@ -548,7 +548,15 @@ func _deserialize_event(data: Dictionary) -> EventData:
 
 func _deserialize_page(data: Dictionary) -> EventPage:
 	var page := EventPage.new()
-	page.trigger = data.get("trigger", 0) as EventPage.Trigger
+	# Schema v4 stores the trigger as its enum name; earlier schemas as an int.
+	var raw_trigger: Variant = data.get("trigger", 0)
+	if raw_trigger is String:
+		if EventPage.Trigger.has(raw_trigger):
+			page.trigger = EventPage.Trigger[raw_trigger]
+		else:
+			push_error("[Project] Unknown page trigger: %s" % raw_trigger)
+	else:
+		page.trigger = int(raw_trigger) as EventPage.Trigger
 	var gc: Array = data.get("graphic_color", [0.8, 0.2, 0.2, 1.0])
 	page.graphic_color = Color(gc[0], gc[1], gc[2], gc[3])
 	var pg = data.get("graphic", null)
@@ -567,7 +575,15 @@ func _deserialize_page(data: Dictionary) -> EventPage:
 
 func _deserialize_command(data: Dictionary) -> EventCommand:
 	var cmd := EventCommand.new()
-	cmd.type = data.get("type", 0) as EventCommand.Type
+	# Schema v4 stores the type as its enum name; earlier schemas as an int.
+	var raw_type: Variant = data.get("type", 0)
+	if raw_type is String:
+		if EventCommand.Type.has(raw_type):
+			cmd.type = EventCommand.Type[raw_type]
+		else:
+			push_error("[Project] Unknown command type: %s" % raw_type)
+	else:
+		cmd.type = int(raw_type) as EventCommand.Type
 	var params: Dictionary = data.get("params", {}).duplicate(true)
 	if params.has("commands_if"):
 		params["commands_if"] = _deserialize_command_array(params["commands_if"])

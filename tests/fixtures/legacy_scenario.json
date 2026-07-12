@@ -1,0 +1,48 @@
+{
+	"project": "tests/fixtures/legacy_project.rpgc",
+	"start_map_id": 0,
+	"steps": [
+		{
+			"action": "wait_frames",
+			"count": 5
+		},
+		{
+			"action": "snapshot"
+		},
+		{
+			"action": "move",
+			"direction": "left",
+			"times": 1
+		},
+		{
+			"action": "wait_frames",
+			"count": 2
+		},
+		{
+			"action": "interact"
+		},
+		{
+			"action": "wait_frames",
+			"count": 5
+		},
+		{
+			"action": "expect_switch",
+			"id": 1,
+			"value": true
+		},
+		{
+			"action": "expect_player_facing",
+			"x": -1,
+			"y": 0
+		},
+		{
+			"action": "expect_event_facing",
+			"id": 0,
+			"x": 1,
+			"y": 0
+		},
+		{
+			"action": "snapshot"
+		}
+	]
+}

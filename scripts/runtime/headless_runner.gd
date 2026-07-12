@@ -27,6 +27,7 @@ Usage:
   --scenario <path>      Run a scenario JSON file and report results.
   --project  <path>      Load a project (use with --list-maps or --scenario).
   --validate <path>      Lint a project or scenario file (exit 1 on errors).
+  --resave   <path>      Load a project and save it back (migrates schema).
   --list-maps            Print a JSON array of all maps and exit.
   --list-database        Print a JSON summary of the project database and exit.
   --map-id   <int>       Override the start map id for --scenario.
@@ -52,6 +53,17 @@ func _ready() -> void:
 
 	if not validate_path.is_empty():
 		_validate(validate_path, output_path)
+		return
+
+	var resave_path: String = _get_arg(args, "--resave")
+	if not resave_path.is_empty():
+		if not ProjectState.load_from(resave_path):
+			push_error("[Headless] Could not load project: %s" % resave_path)
+			get_tree().quit(2)
+			return
+		ProjectState.save(resave_path)
+		print("[Headless] Re-saved %s at schema version %d" % [resave_path, ProjectState.serialize()["version"]])
+		get_tree().quit(0)
 		return
 
 	# Load project if given. A scenario may instead name its own project

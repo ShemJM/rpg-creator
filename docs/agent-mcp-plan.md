@@ -154,10 +154,10 @@ The MCP server should be a thin wrapper over the service APIs. It does NOT touch
 
 ### Command Shape (for `event_append_command`)
 
-> **On-disk note:** project files currently serialize `type` as the integer
-> ordinal of `EventCommand.Type` and page `trigger` as the ordinal of
-> `EventPage.Trigger` (schema v3). Schema v4 will move to the string forms
-> shown here, keeping integer values loadable for backward compatibility.
+> **On-disk note:** schema v4 serializes `type` as the `EventCommand.Type`
+> enum name and page `trigger` as the `EventPage.Trigger` name, exactly as
+> shown here. Integer ordinals (schema v3 and earlier) remain loadable for
+> backward compatibility; `--resave <path>` migrates a file in place.
 > The complete per-type param reference lives in `CLAUDE.md`.
 
 ```json

@@ -17,7 +17,7 @@
 										],
 										"name": "Elder"
 									},
-									"type": 0
+									"type": "SHOW_TEXT"
 								}
 							],
 							"condition_self_switch": "",
@@ -31,7 +31,7 @@
 								0.899999976158142,
 								1.0
 							],
-							"trigger": 0
+							"trigger": "ACTION_BUTTON"
 						},
 						{
 							"commands": [
@@ -43,7 +43,7 @@
 										],
 										"name": "Elder"
 									},
-									"type": 0
+									"type": "SHOW_TEXT"
 								}
 							],
 							"condition_self_switch": "",
@@ -57,7 +57,7 @@
 								0.899999976158142,
 								1.0
 							],
-							"trigger": 0
+							"trigger": "ACTION_BUTTON"
 						}
 					],
 					"x": 4,
@@ -77,14 +77,14 @@
 										],
 										"name": ""
 									},
-									"type": 0
+									"type": "SHOW_TEXT"
 								},
 								{
 									"params": {
 										"letter": "A",
 										"value": true
 									},
-									"type": 6
+									"type": "SET_SELF_SWITCH"
 								}
 							],
 							"condition_self_switch": "",
@@ -98,7 +98,7 @@
 								0.100000001490116,
 								1.0
 							],
-							"trigger": 0
+							"trigger": "ACTION_BUTTON"
 						},
 						{
 							"commands": [
@@ -109,7 +109,7 @@
 										],
 										"name": ""
 									},
-									"type": 0
+									"type": "SHOW_TEXT"
 								}
 							],
 							"condition_self_switch": "A",
@@ -123,7 +123,7 @@
 								0.100000001490116,
 								1.0
 							],
-							"trigger": 0
+							"trigger": "ACTION_BUTTON"
 						}
 					],
 					"x": 9,
@@ -141,7 +141,7 @@
 										"x": 1.0,
 										"y": 6.0
 									},
-									"type": 5
+									"type": "TRANSFER_PLAYER"
 								}
 							],
 							"condition_self_switch": "",
@@ -155,7 +155,7 @@
 								0.100000001490116,
 								1.0
 							],
-							"trigger": 1
+							"trigger": "PLAYER_TOUCH"
 						}
 					],
 					"x": 14,
@@ -168,9 +168,7 @@
 			"height": 12,
 			"id": 0,
 			"map_name": "Thornvale",
-			"surface_layer": {
-
-			},
+			"surface_layer": {},
 			"width": 15
 		},
 		{
@@ -189,7 +187,7 @@
 										],
 										"name": "Goblin Boss"
 									},
-									"type": 0
+									"type": "SHOW_TEXT"
 								},
 								{
 									"params": {
@@ -199,7 +197,7 @@
 										],
 										"name": ""
 									},
-									"type": 0
+									"type": "SHOW_TEXT"
 								},
 								{
 									"params": {
@@ -209,7 +207,7 @@
 										],
 										"name": ""
 									},
-									"type": 0
+									"type": "SHOW_TEXT"
 								},
 								{
 									"params": {
@@ -218,14 +216,14 @@
 										],
 										"value": true
 									},
-									"type": 2
+									"type": "CONTROL_SWITCHES"
 								},
 								{
 									"params": {
 										"letter": "A",
 										"value": true
 									},
-									"type": 6
+									"type": "SET_SELF_SWITCH"
 								}
 							],
 							"condition_self_switch": "",
@@ -239,7 +237,7 @@
 								0.100000001490116,
 								1.0
 							],
-							"trigger": 0
+							"trigger": "ACTION_BUTTON"
 						},
 						{
 							"commands": [
@@ -250,7 +248,7 @@
 										],
 										"name": ""
 									},
-									"type": 0
+									"type": "SHOW_TEXT"
 								}
 							],
 							"condition_self_switch": "A",
@@ -264,7 +262,7 @@
 								0.400000005960464,
 								1.0
 							],
-							"trigger": 0
+							"trigger": "ACTION_BUTTON"
 						}
 					],
 					"x": 5,
@@ -282,7 +280,7 @@
 										"x": 13.0,
 										"y": 6.0
 									},
-									"type": 5
+									"type": "TRANSFER_PLAYER"
 								}
 							],
 							"condition_self_switch": "",
@@ -296,24 +294,20 @@
 								0.100000001490116,
 								1.0
 							],
-							"trigger": 1
+							"trigger": "PLAYER_TOUCH"
 						}
 					],
 					"x": 0,
 					"y": 6
 				}
 			],
-			"ground_layer": {
-
-			},
+			"ground_layer": {},
 			"height": 12,
 			"id": 1,
 			"map_name": "Goblin Cave",
-			"surface_layer": {
-
-			},
+			"surface_layer": {},
 			"width": 10
 		}
 	],
-	"version": 1
+	"version": 4
 }
