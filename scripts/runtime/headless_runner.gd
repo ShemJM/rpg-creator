@@ -26,6 +26,7 @@ rpg-creator headless runner
 Usage:
   --scenario <path>      Run a scenario JSON file and report results.
   --project  <path>      Load a project (use with --list-maps or --scenario).
+  --validate <path>      Lint a project or scenario file (exit 1 on errors).
   --list-maps            Print a JSON array of all maps and exit.
   --list-database        Print a JSON summary of the project database and exit.
   --map-id   <int>       Override the start map id for --scenario.
@@ -43,10 +44,15 @@ func _ready() -> void:
 	# Parse args.
 	var scenario_path: String = _get_arg(args, "--scenario")
 	var project_path: String  = _get_arg(args, "--project")
+	var validate_path: String = _get_arg(args, "--validate")
 	var map_id_str: String    = _get_arg(args, "--map-id")
 	var output_path: String   = _get_arg(args, "--output")
 	var list_maps: bool       = "--list-maps" in args
 	var list_database: bool   = "--list-database" in args
+
+	if not validate_path.is_empty():
+		_validate(validate_path, output_path)
+		return
 
 	# Load project if given. A scenario may instead name its own project
 	# (the "project" key), so only the list operations hard-require --project.
@@ -87,11 +93,79 @@ func _ready() -> void:
 		await _run_scenario(scenario_path, output_path)
 		return
 
-	push_error("[Headless] No action specified. Use --scenario, --list-maps, or --list-database.")
+	push_error("[Headless] No action specified. Use --scenario, --validate, --list-maps, or --list-database.")
 	get_tree().quit(2)
 
 
+## Lint a project or scenario file (detected by its "steps" key) without
+## running it. Prints a JSON array of { path, message } errors.
+func _validate(path: String, output_path: String = "") -> void:
+	if not FileAccess.file_exists(path):
+		push_error("[Headless] File not found: %s" % path)
+		get_tree().quit(2)
+		return
+	var file := FileAccess.open(path, FileAccess.READ)
+	var parsed: Variant = JSON.parse_string(file.get_as_text())
+	file.close()
+	if not parsed is Dictionary:
+		push_error("[Headless] Not valid JSON: %s" % path)
+		get_tree().quit(2)
+		return
+
+	var errors: Array
+	if (parsed as Dictionary).has("steps"):
+		errors = ProjectValidator.validate_scenario(parsed)
+	else:
+		errors = ProjectValidator.validate_project(parsed)
+
+	var json_out := JSON.stringify(errors, "\t")
+	print(json_out)
+	if not output_path.is_empty():
+		_write_file(output_path, json_out)
+	if errors.is_empty():
+		print("[Headless] %s: OK" % path)
+	else:
+		print("[Headless] %s: %d error(s)" % [path, errors.size()])
+	get_tree().quit(0 if errors.is_empty() else 1)
+
+
 func _run_scenario(path: String, output_path: String = "") -> void:
+	# Read the scenario up front: its embedded project (and start map) must be
+	# applied BEFORE the runtime scene exists — RuntimePlayer builds the map
+	# in _ready(), so a project loaded later would never be constructed.
+	if not FileAccess.file_exists(path):
+		push_error("[Headless] Scenario file not found: %s" % path)
+		get_tree().quit(2)
+		return
+	var file := FileAccess.open(path, FileAccess.READ)
+	var parsed: Variant = JSON.parse_string(file.get_as_text())
+	file.close()
+	if not parsed is Dictionary:
+		push_error("[Headless] Scenario is not valid JSON: %s" % path)
+		get_tree().quit(2)
+		return
+	var scenario: Dictionary = parsed
+
+	var embedded_project: String = scenario.get("project", "")
+	if not embedded_project.is_empty():
+		if not ProjectState.load_from(embedded_project):
+			push_error("[Headless] Could not load scenario project: %s" % embedded_project)
+			get_tree().quit(2)
+			return
+		scenario.erase("project")  # Already loaded — don't reload mid-run.
+	elif ProjectState.maps.is_empty():
+		push_error("[Headless] No project loaded. Pass --project or add a \"project\" key to the scenario.")
+		get_tree().quit(2)
+		return
+
+	var start_map_id: int = int(scenario.get("start_map_id", -1))
+	if start_map_id >= 0:
+		for i in range(ProjectState.maps.size()):
+			if ProjectState.maps[i].id == start_map_id:
+				ProjectState.select_map(i)
+				break
+		scenario.erase("start_map_id")
+
 	# Build a minimal runtime scene (no window needed when --headless).
 	var runtime_scene := load(_RuntimePlayerScene) as PackedScene
 	if runtime_scene == null:
@@ -116,7 +190,7 @@ func _run_scenario(path: String, output_path: String = "") -> void:
 		get_tree().quit(exit_code)
 	)
 
-	runner.run_from_file(path)
+	runner.run_from_dict(scenario)
 
 
 static func _write_file(path: String, content: String) -> void:

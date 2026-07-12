@@ -5,9 +5,10 @@ rpg-creator is an RPG Maker-style tool built in **Godot 4.6 / GDScript**. Humans
 ## The workflow
 
 1. **Author** a game: write a `.rpgc`/`.rpgm` JSON file in `games/` (schema below).
-2. **Test**: write a `games/<name>_scenario.json` (scripted playthrough + assertions).
-3. **Run**: `make run-scenario S=games/<name>_scenario.json` — exit 0 = pass, 1 = assertion failures, 2 = fatal. Read the printed assertions/trace, fix, repeat.
-4. `make test` runs every scenario in `games/` plus the database summary check.
+2. **Validate**: `make validate P=games/<name>.rpgc` — sub-second lint with precise `path: message` errors (unknown command types, dangling transfer targets, out-of-bounds cells, bad params). Fix everything before running.
+3. **Test**: write a `games/<name>_scenario.json` (scripted playthrough + assertions); validate it the same way (`make validate P=games/<name>_scenario.json`).
+4. **Run**: `make run-scenario S=games/<name>_scenario.json` — exit 0 = pass, 1 = assertion failures, 2 = fatal. Read the printed assertions/trace, fix, repeat.
+5. `make test` validates everything, runs every scenario in `games/`, and checks the database summary.
 
 Setup: `make setup` resolves or downloads a Godot 4.6 binary into `bin/godot` (a SessionStart hook does this automatically in Claude Code web sessions; it needs network access to `github.com/godotengine`, or set `$GODOT` to an existing binary). There is no build step — GDScript is interpreted.
 
@@ -19,8 +20,8 @@ All invocations go through the Makefile (`make help`), which wraps:
 
 ```
 bin/godot --headless --path . -- \
-  [--project <path>] [--scenario <path>] [--list-maps] [--list-database] \
-  [--map-id <int>] [--output <results.json>]
+  [--project <path>] [--scenario <path>] [--validate <path>] \
+  [--list-maps] [--list-database] [--map-id <int>] [--output <results.json>]
 ```
 
 (User args after `--` divert `StartScreen` into `scripts/runtime/headless_runner.gd`; `godot --script` mode can't be used because autoload singletons only exist in a normal project run.)

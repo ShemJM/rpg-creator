@@ -8,11 +8,15 @@ TIMEOUT ?= 120
 
 SCENARIOS := $(wildcard games/*_scenario.json)
 
-.PHONY: help setup test test-scenarios test-database run-scenario list-maps list-database
+PROJECTS := $(wildcard games/*.rpgm) $(wildcard games/*.rpgc)
+
+.PHONY: help setup test test-scenarios test-database test-validator validate validate-all run-scenario list-maps list-database
 
 help:
 	@echo "make setup                              # install/locate Godot (bin/godot)"
-	@echo "make test                               # run every games/*_scenario.json + database check"
+	@echo "make test                               # validate + run every games/*_scenario.json + database check"
+	@echo "make validate P=games/foo.rpgc          # lint one project or scenario file"
+	@echo "make validate-all                       # lint every project + scenario in games/"
 	@echo "make run-scenario S=games/foo_scenario.json"
 	@echo "make list-maps P=games/foo.rpgm"
 	@echo "make list-database P=games/foo.rpgc"
@@ -20,7 +24,25 @@ help:
 setup:
 	bash scripts/setup-godot.sh
 
-test: test-scenarios test-database
+test: validate-all test-validator test-scenarios test-database
+
+# The validator must reject a deliberately broken project (exit 1, not 0/2).
+test-validator:
+	@timeout $(TIMEOUT) $(GODOT) $(RUNNER) --validate tests/fixtures/broken_project.rpgc >/dev/null; \
+	code=$$?; \
+	if [ $$code -eq 1 ]; then echo "validator rejects broken fixture OK"; \
+	else echo "validator FAILED to reject broken fixture (exit $$code)"; exit 1; fi
+
+validate:
+	timeout $(TIMEOUT) $(GODOT) $(RUNNER) --validate $(P)
+
+validate-all:
+	@fail=0; \
+	for f in $(PROJECTS) $(SCENARIOS); do \
+		echo "=== validate $$f"; \
+		timeout $(TIMEOUT) $(GODOT) $(RUNNER) --validate $$f || fail=1; \
+	done; \
+	exit $$fail
 
 test-scenarios:
 	@if [ -z "$(GODOT)" ]; then echo "No Godot binary — run 'make setup' first."; exit 1; fi

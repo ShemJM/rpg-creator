@@ -1,0 +1,48 @@
+{
+	"version": 3,
+	"maps": [
+		{
+			"id": 0,
+			"map_name": "Broken",
+			"width": 5,
+			"height": 5,
+			"ground_layer": { "0,0": 0, "9,9": 0, "1,0": 42 },
+			"surface_layer": {},
+			"events": [
+				{
+					"id": 0,
+					"event_name": "OutOfBounds",
+					"x": 10,
+					"y": 10,
+					"pages": [
+						{
+							"trigger": 7,
+							"commands": [
+								{ "type": 99, "params": {} },
+								{ "type": 5, "params": { "map_id": 3, "x": 1, "y": 1 } },
+								{ "type": 13, "params": { "name": "missing_label" } },
+								{ "type": 1, "params": { "choices": [] } },
+								{ "type": 3, "params": { "ids": [200], "op": "divide", "value": 1 } },
+								{ "type": 6, "params": { "letter": "Z", "value": true } },
+								{ "type": 15, "params": { "target": "npc", "steps": ["teleport"] } }
+							]
+						}
+					]
+				},
+				{
+					"id": 0,
+					"event_name": "DuplicateId",
+					"x": 1,
+					"y": 1,
+					"pages": []
+				}
+			]
+		}
+	],
+	"database": {
+		"actors": [ { "id": 0, "actor_name": "Orphan", "class_id": 5 } ],
+		"classes": [],
+		"items": [],
+		"equipment": [ { "id": 0, "equip_name": "Thing", "kind": "shield" } ]
+	}
+}
