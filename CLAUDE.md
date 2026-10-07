@@ -12,7 +12,7 @@ rpg-creator is an RPG Maker-style tool built in **Godot 4.6 / GDScript**. Humans
 
 Setup: `make setup` resolves or downloads a Godot 4.6 binary into `bin/godot` (a SessionStart hook does this automatically in Claude Code web sessions; it needs network access to `github.com/godotengine`, or set `$GODOT` to an existing binary). There is no build step — GDScript is interpreted.
 
-Canonical worked examples: `games/lost_crystal.rpgm` (dialogue/switch adventure) and `games/adventure_demo.rpgc` (full RPG loop: quest → shop → equip → boss battle with a mid-fight item → transfer), each with a passing `*_scenario.json`.
+Canonical worked examples: `games/lost_crystal.rpgm` (dialogue/switch adventure) and `games/adventure_demo.rpgc` (full RPG loop: quest → shop → equip → boss battle with a mid-fight item → transfer), each with a passing `*_scenario.json`. `games/regression_suite.rpgc` + `regression_*_scenario.json` pin down the exact engine rules (equipment math, choice → page refresh, variable ops, autorun, game over, move routes, a 2-vs-2 battle) — copy patterns from there.
 
 ## Headless CLI
 
@@ -20,7 +20,8 @@ All invocations go through the Makefile (`make help`), which wraps:
 
 ```
 bin/godot --headless --path . -- \
-  [--project <path>] [--scenario <path>] [--validate <path>] \
+  [--project <path>] [--scenario <path>] [--validate <path>] [--test-all <dir>] \
+  [--resave <path>] [--roundtrip-all <dir>] \
   [--list-maps] [--list-database] [--map-id <int>] [--output <results.json>]
 ```
 
@@ -28,6 +29,8 @@ bin/godot --headless --path . -- \
 
 - `--scenario` alone is enough when the scenario file has a `"project"` key.
 - `--output` writes the result JSON to a file (stdout also carries Godot's banner, so parse the file, not stdout).
+- `--scenario` / `--test-all` **validate the project and scenario first** and abort (fatal) on validator errors, so a typo never silently runs as something else.
+- `--resave <path>` loads a project and writes it back at the current schema version (with `--output <path>` it writes elsewhere); `--roundtrip-all <dir>` checks every project in a directory serializes idempotently (`make test-roundtrip`).
 - Exit codes: `0` pass, `1` assertion failures, `2` fatal (bad args/file).
 
 ## Project file schema (`.rpgc` / `.rpgm`, plain JSON)
@@ -58,6 +61,7 @@ Written/read by `ProjectState.serialize()/deserialize()` (`scripts/autoloads/pro
 
 - Layer keys are `"x,y"` strings → tile id (int). Cover **every** ground cell (`fill` the rect) — missing cells render empty.
 - Default tileset ids: `0` Grass, `1` Dirt, `2` Stone (passable); `3` Water, `4` Wall (**impassable**). Impassable tiles on either layer block movement.
+- `GAME_OVER` (or a wipe) sets `game_over` in the snapshot; afterwards input is ignored, queued autoruns never start and parallel pages stop.
 - **The player always spawns at the map center** (`width/2`, `height/2`, floored). Plan maps and `expect_position` assertions around that.
 
 ### Events → pages → commands
@@ -113,7 +117,9 @@ Written/read by `ProjectState.serialize()/deserialize()` (`scripts/autoloads/pro
 | 21 | SHOP_PROCESSING | `{ "entries": [ { "kind": "item"\|"equip", "id": 0, "price": 30 } ] }` — `price` optional (defaults to database price); sell price = floor(db price / 2); **blocks the event until the shop closes** — drive it with the `shop_buy`/`shop_sell`/`shop_close` scenario actions |
 | 22 | BATTLE_PROCESSING | `{ "enemies": [enemy_id, ...], "can_flee": true, "commands_win": [...], "commands_lose": [...] }` — blocks until the battle ends; `win` splices `commands_win`, `lose` splices `commands_lose` (**empty `commands_lose` = game over**), `flee` continues past the command |
 
-Follow-up branching after SHOW_CHOICES: the chosen index is written to **variable 0** — branch with CONDITIONAL_BRANCH on `condition_type: "variable"`. There are **100 switches and 100 variables** (ids 0–99), reset each play-test. Self-switches are per-event letters A–D.
+Rules the validator enforces that are easy to trip over: a `switch` branch `value` must be a JSON boolean (`1` never matches); `JUMP_TO_LABEL` can only reach a `LABEL` in the **same command list or the page's top level** (never inside another branch); database ids must be unique per table; equipment `slot` must match its `kind` (`weapon` ↔ slot `weapon`, `armor` ↔ `head`/`body`/`accessory`) and `CHANGE_EQUIPMENT` must name the piece's own slot; `stat_mods` may list only the keys that change (missing keys are 0). Scenario files are cross-checked against their project (map/event/actor/item ids).
+
+Follow-up branching after SHOW_CHOICES: the chosen index is written to **variable 0** — branch with CONDITIONAL_BRANCH on `condition_type: "variable_gte"` (there is no equality condition — order the checks from highest index down, or use `commands_else`). There are **100 switches and 100 variables** (ids 0–99), reset each play-test. Self-switches are per-event letters A–D.
 
 ### Database & party (live at runtime since v5)
 
@@ -145,12 +151,15 @@ Runtime party rules:
     { "action": "expect_event_facing", "id": 0, "x": -1, "y": 0 },
     { "action": "expect_dialogue", "contains": "Hello", "speaker": "Old Man" },
     { "action": "expect_event_erased", "id": 0, "value": true },
+    { "action": "expect_event_position", "id": 0, "x": 2, "y": 3 },
+    { "action": "expect_self_switch", "id": 0, "letter": "A", "value": true },
     { "action": "expect_event_running", "value": false },
     { "action": "expect_game_over", "value": false },
     { "action": "expect_gold", "value": 40 },
     { "action": "expect_item_count", "kind": "item", "id": 0, "value": 2 },
     { "action": "expect_party_size", "value": 1 },
     { "action": "expect_actor_hp", "actor_id": 0, "value": 90 },
+    { "action": "expect_actor_mp", "actor_id": 0, "value": 20 },
     { "action": "expect_actor_stat", "actor_id": 0, "stat": "atk", "value": 17 },
     { "action": "shop_buy", "index": 0, "count": 1 },
     { "action": "shop_sell", "kind": "item", "id": 0, "count": 1 },
@@ -183,7 +192,7 @@ Timing conventions that make scenarios deterministic:
 - One `advance_dialogue` per SHOW_TEXT box; dialogue must be advanced before the event continues.
 - Facing vectors: right `(1,0)`, left `(-1,0)`, up `(0,-1)`, down `(0,1)`.
 
-Results JSON: `{ passed, failed, total, assertions: [{pass, message}], trace: [...], snapshot }`. The `trace` array logs every event start/finish, command, switch/variable/self-switch change, transfer, dialogue line, choice, game over, player move, and every gold/item/HP/MP/equipment change — read it to debug why an assertion failed. Final `snapshot`: `{ map_id, map_name, player_grid, player_facing, event_facing, event_running, events_erased, switches_on, variables, gold, inventory, equip_inventory, party }` (only non-false switches / non-zero variables/stock listed).
+Results JSON: `{ passed, failed, total, assertions: [{pass, message}], trace: [...], snapshot }`. The `trace` array logs every event start/finish, command, switch/variable/self-switch change, transfer, dialogue line, choice, game over, player move, and every gold/item/HP/MP/equipment change — read it to debug why an assertion failed. Final `snapshot`: `{ map_id, map_name, player_grid, player_facing, event_positions, event_running, events_erased, switches_on, variables, gold, inventory, equip_inventory, party, game_over, shop_open, shop_entries, battle }` (only non-false switches / non-zero variables/stock listed).
 
 `make test-scenarios` runs every scenario in `games/` inside **one** engine boot (`--test-all games`), so the suite stays fast as games accumulate.
 

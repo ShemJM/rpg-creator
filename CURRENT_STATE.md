@@ -1,6 +1,6 @@
 # Current State
 
-> Last updated: 2026-07-12
+> Last updated: 2026-10-07
 
 ## What works
 
@@ -50,16 +50,19 @@
 
 ### Agent workflow (see CLAUDE.md)
 
-- **Headless CLI** — `godot --headless --path . -- <flags>` runs scenarios, validates project/scenario files (`--validate`), runs the whole suite in one boot (`--test-all`), migrates schemas (`--resave`), and lists maps/database. `Makefile` wraps the canonical commands; `scripts/setup-godot.sh` bootstraps a Godot binary (auto-run by a Claude Code SessionStart hook).
-- **Scenario tests** — JSON playthroughs with assertions (position, facing, switches, variables, dialogue content, event erasure, game over) plus a timeout watchdog; full structured trace + snapshot output for debugging.
-- **Validator** — `scripts/runtime/project_validator.gd` lints raw project/scenario JSON with precise path+message errors before anything runs.
-- **CI** — `.github/workflows/test.yml` runs `make test` on every push.
+- **Headless CLI** — `godot --headless --path . -- <flags>` runs scenarios, validates project/scenario files (`--validate`), runs the whole suite in one boot (`--test-all`), migrates schemas (`--resave`, optionally to `--output`), checks serialization idempotence (`--roundtrip-all`), and lists maps/database. Scenario runs validate the project *and* the scenario (cross-checked against the project's ids) before anything executes. `Makefile` wraps the canonical commands; `scripts/setup-godot.sh` bootstraps a Godot binary (auto-run by a Claude Code SessionStart hook).
+- **Scenario tests** — JSON playthroughs with assertions (position, facing, event position, switches, variables, self-switches, dialogue content, event erasure, game over, gold/items/party/HP/MP/stats, shop and battle state) plus a timeout watchdog; full structured trace + snapshot output for debugging. `games/regression_suite.rpgc` + its four `regression_*_scenario.json` files pin down the engine rules (equipment math, choice → page refresh, variable ops, autorun, game over, move routes, 2-vs-2 battle).
+- **Validator** — `scripts/runtime/project_validator.gd` lints raw project/scenario JSON with precise path+message errors: id cross-references (maps, events, actors, items, equipment, enemies), duplicate ids, equipment kind/slot consistency, label reachability matching the runtime's jump rules, condition value types, stat keys, and per-action scenario fields. `make test-validator` diffs its output for a deliberately broken project and scenario against expected files.
+- **Save format stability** — re-saving writes whole numbers as ints and `make test-roundtrip` proves every project in `games/` serializes idempotently.
+- **CI** — `.github/workflows/test.yml` runs `make test` (which keeps going after a failing sub-target) on every push, with a 20-minute cap and result JSON uploaded on failure.
 
 ## Known gaps / rough edges
 
 - **`PLAY_SE` is a stub** — advances immediately with no audio playback (no BGM/SE yet).
-- **Party is fixed at play-test start** — no CHANGE_PARTY command yet; class stats are authoring-only (no level growth); no skills, no random encounter zones, no troops table (BATTLE_PROCESSING takes inline enemy ids); item effects are HP/MP restore only.
-- **No editor UI yet for the v5 systems** — the party/shop/battle commands and enemies table are authorable via JSON (agents) but not yet in the event editor panel / database panel.
+- **Party is fixed at play-test start** — no CHANGE_PARTY / CHANGE_MP command yet; class stats are authoring-only (no level growth, no EXP); no skills, no random encounter zones, no troops table (BATTLE_PROCESSING takes inline enemy ids); item effects are HP/MP restore only; `mat`/`mdf`/`luk` are unused in combat.
+- **No editor UI yet for the v5 systems** — the party/shop/battle commands, the enemies table and the `system` block are authorable via JSON (agents) but not yet in the event editor panel / database panel. The CONDITIONAL_BRANCH editor also lacks the `gold_gte` / `has_item` condition types (opening one shows it as "Switch"; toggling the checkbox there would overwrite the numeric threshold).
+- **No runtime save/load or field menu** — progress lives only for the current play-test; Escape ends the play-test immediately, even mid-shop or mid-battle.
+- **Timers are wall-clock** — WAIT, fades and move-route steps run on seconds while scenarios count frames, so generous `wait_frames` margins are needed around them.
 - **Map transfer UX** — Transfer Player command works at runtime but there is no editor UI for picking the target map by name.
 - **Parallel events + dialogue** — a parallel event showing text while a blocking event also waits on dialogue can cross-talk; parallel pages are best used for switch/variable/wait/move logic.
 - **No undo/redo** in the editor.
