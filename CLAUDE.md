@@ -7,6 +7,7 @@
 - **Handoffs:** `docs/handoffs/HANDOFF_<YYYY-MM-DD>_<topic>.md`. **Tickets:** `docs/tickets/`. Formats: Game Dev workspace `docs/HANDOFF_FORMAT.md`.
 - **Backlog:** `ROADMAP.md` open phases (2 tilesets, 4 audio/pictures, 6 editor polish, 8 export) and `CURRENT_STATE.md` gaps (`PLAY_SE` stub, fixed party, no undo). Spec: `Game-Dev-Vault/design/RPG Maker — Spec.md`.
 - **Routine:** none. Tier 4 (parked): this is a tool, not a Steam title; see workspace `docs/ROADMAP_2026-Q4.md`.
+- **Gotchas:** the Makefile shells out to `timeout`, which macOS lacks, so `make test` fails with exit 2 locally (`timeout: command not found`) while CI is fine. Install GNU coreutils (`brew install coreutils`) and run with `PATH="/opt/homebrew/opt/coreutils/libexec/gnubin:$PATH" make test`, or fix the Makefile to fall back to `gtimeout`.
 
 Workspace conventions are inherited from `/Users/shem/Documents/GitHub/Game Dev/CLAUDE.md`.
 
