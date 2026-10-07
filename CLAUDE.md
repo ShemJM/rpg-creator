@@ -1,5 +1,15 @@
 # CLAUDE.md
 
+## Agent contract
+- **Godot:** 4.6, GL Compatibility (`project.godot`). `make setup` finds or downloads it (`scripts/setup-godot.sh`; a SessionStart hook runs it in web sessions). Local binary `/opt/homebrew/bin/godot` (4.7) works too: `GODOT=/opt/homebrew/bin/godot make test`.
+- **Test:** `make test` (validates every project JSON, runs every scenario in `games/`, checks the database summary; exit 0 pass, 1 assertion failures, 2 fatal). CI: `.github/workflows/test.yml`.
+- **Branch policy:** default branch is **`master`**. `auto/<topic>` from an up-to-date `master` → push → PR. Never commit to `master`. A dirty tree means Shem is mid-work: stop (there is a long-standing uncommitted edit to `games/lost_crystal.rpgm`; leave it alone).
+- **Handoffs:** `docs/handoffs/HANDOFF_<YYYY-MM-DD>_<topic>.md`. **Tickets:** `docs/tickets/`. Formats: Game Dev workspace `docs/HANDOFF_FORMAT.md`.
+- **Backlog:** `ROADMAP.md` open phases (2 tilesets, 4 audio/pictures, 6 editor polish, 8 export) and `CURRENT_STATE.md` gaps (`PLAY_SE` stub, fixed party, no undo). Spec: `Game-Dev-Vault/design/RPG Maker — Spec.md`.
+- **Routine:** none. Tier 4 (parked): this is a tool, not a Steam title; see workspace `docs/ROADMAP_2026-Q4.md`.
+
+Workspace conventions are inherited from `/Users/shem/Documents/GitHub/Game Dev/CLAUDE.md`.
+
 rpg-creator is an RPG Maker-style tool built in **Godot 4.6 / GDScript**. Humans use the in-engine editor UI; **agents author games by writing the project JSON directly and testing them with the headless runner** — no UI needed.
 
 ## The workflow
