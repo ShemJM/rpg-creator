@@ -4,3 +4,6 @@
 
 # Cached Godot binary + headless outputs (scripts/setup-godot.sh, Makefile)
 /bin/
+
+# macOS Finder metadata
+.DS_Store
