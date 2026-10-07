@@ -11,6 +11,7 @@ var _index: int = 0
 var _waiting: bool = false
 var _event: EventData = null
 var _stopped: bool = false
+var _pending_choices: Array = []  # Labels of the SHOW_CHOICES currently waiting.
 
 
 ## Abort execution. Pending one-shot signal handlers become no-ops.
@@ -138,6 +139,7 @@ func _cmd_show_choices(params: Dictionary) -> void:
 	var choices: Array = params.get("choices", [])
 	var cancel_index: int = int(params.get("cancel_index", -1))
 	print("[ER] show_choices: ", choices)
+	_pending_choices = choices.duplicate()
 	_waiting = true
 	SignalBus.choices_requested.emit(choices, cancel_index)
 	SignalBus.choice_made.connect(_on_choice_made, CONNECT_ONE_SHOT)
@@ -167,8 +169,7 @@ func _on_choice_made(_index: int) -> void:
 	# Disconnect scripted choice handler if not consumed.
 	if SignalBus.scripted_choice_made.is_connected(_on_scripted_choice):
 		SignalBus.scripted_choice_made.disconnect(_on_scripted_choice)
-	# Choice result stored in variable 0 for conditional access.
-	GameState.set_variable(0, _index)
+	_store_choice_result(_index)
 	_execute_next()
 
 
@@ -177,9 +178,20 @@ func _on_scripted_choice(index: int) -> void:
 	if SignalBus.choice_made.is_connected(_on_choice_made):
 		SignalBus.choice_made.disconnect(_on_choice_made)
 	_waiting = false
-	GameState.set_variable(0, index)
+	_store_choice_result(index)
 	SignalBus.choice_made.emit(index)  # Let dialogue box close itself.
 	_execute_next()
+
+
+## Choice result lives in variable 0 for CONDITIONAL_BRANCH. Route it through
+## the same trace signal CONTROL_VARIABLES uses so pages conditioned on
+## variable 0 re-evaluate and the change shows up in the scenario trace.
+func _store_choice_result(index: int) -> void:
+	var label: String = str(_pending_choices[index]) if index >= 0 and index < _pending_choices.size() else ""
+	_pending_choices = []
+	GameState.set_variable(0, index)
+	SignalBus.trace_choice_made.emit(index, label)
+	SignalBus.trace_variable_changed.emit(0, GameState.get_variable(0))
 
 
 func _cmd_control_switches(params: Dictionary) -> void:
@@ -269,7 +281,7 @@ func _cmd_conditional_branch(params: Dictionary) -> void:
 			condition_met = GameState.get_variable(id) >= int(value)
 		"self_switch":
 			var letter: String = str(value)
-			condition_met = _event.self_switches.get(letter, false)
+			condition_met = _event != null and _event.self_switches.get(letter, false)
 		"gold_gte":
 			condition_met = GameState.gold >= int(value)
 		"has_item":
@@ -370,6 +382,10 @@ func _find_label(commands: Array, label_name: String) -> int:
 
 
 func _cmd_game_over() -> void:
+	# Flag first: _on_event_finished (via finished) must not start queued
+	# autoruns, and parallel runners must not restart, once the game is over.
+	GameState.game_over = true
+	_stopped = true
 	SignalBus.trace_game_over.emit()
 	SignalBus.trace_event_finished.emit(_event.event_name if _event else "", _event.id if _event else -1)
 	finished.emit()

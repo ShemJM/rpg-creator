@@ -1,0 +1,82 @@
+{
+	"project": "games/regression_suite.rpgc",
+	"start_map_id": 1,
+	"steps": [
+		{
+			"action": "wait_frames",
+			"count": 5
+		},
+		{
+			"action": "move",
+			"direction": "down",
+			"times": 1
+		},
+		{
+			"action": "move",
+			"direction": "up",
+			"times": 1
+		},
+		{
+			"action": "interact"
+		},
+		{
+			"action": "wait_frames",
+			"count": 5
+		},
+		{
+			"action": "expect_battle_active",
+			"value": true
+		},
+		{
+			"action": "battle_attack",
+			"target": 0
+		},
+		{
+			"action": "battle_attack",
+			"target": 1
+		},
+		{
+			"action": "wait_frames",
+			"count": 10
+		},
+		{
+			"action": "expect_battle_active",
+			"value": false
+		},
+		{
+			"action": "expect_battle_result",
+			"value": "win"
+		},
+		{
+			"action": "expect_switch",
+			"id": 30,
+			"value": true
+		},
+		{
+			"action": "expect_switch",
+			"id": 31,
+			"value": false
+		},
+		{
+			"action": "expect_gold",
+			"value": 22
+		},
+		{
+			"action": "expect_actor_hp",
+			"actor_id": 1,
+			"value": 80
+		},
+		{
+			"action": "expect_actor_hp",
+			"actor_id": 0,
+			"gte": 98
+		},
+		{
+			"action": "expect_event_running",
+			"value": false
+		},
+		{
+			"action": "snapshot"
+		}
+	]
+}

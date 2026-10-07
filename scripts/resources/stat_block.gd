@@ -26,6 +26,8 @@ func to_dict() -> Dictionary:
 	}
 
 
+## Base stats (actors/classes/enemies): missing keys fall back to the
+## StatBlock defaults (100 HP / 20 MP / 10 everything else).
 static func from_dict(d: Dictionary) -> StatBlock:
 	var s := StatBlock.new()
 	s.max_hp = int(d.get("max_hp", 100))
@@ -36,6 +38,21 @@ static func from_dict(d: Dictionary) -> StatBlock:
 	s.mdf = int(d.get("mdf", 10))
 	s.agi = int(d.get("agi", 10))
 	s.luk = int(d.get("luk", 10))
+	return s
+
+
+## Additive bonuses (equipment stat_mods): missing keys are 0, so
+## { "atk": 5 } means exactly +5 atk and nothing else.
+static func from_dict_zero(d: Dictionary) -> StatBlock:
+	var s := StatBlock.new()
+	s.max_hp = int(d.get("max_hp", 0))
+	s.max_mp = int(d.get("max_mp", 0))
+	s.atk = int(d.get("atk", 0))
+	s.def = int(d.get("def", 0))
+	s.mat = int(d.get("mat", 0))
+	s.mdf = int(d.get("mdf", 0))
+	s.agi = int(d.get("agi", 0))
+	s.luk = int(d.get("luk", 0))
 	return s
 
 

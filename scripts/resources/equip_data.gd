@@ -19,10 +19,7 @@ const KIND_ARMOR := "armor"
 func _init() -> void:
 	if stat_mods == null:
 		# Equipment bonuses default to zero, not the StatBlock base defaults.
-		stat_mods = StatBlock.from_dict({
-			"max_hp": 0, "max_mp": 0, "atk": 0, "def": 0,
-			"mat": 0, "mdf": 0, "agi": 0, "luk": 0,
-		})
+		stat_mods = StatBlock.from_dict_zero({})
 
 
 func to_dict() -> Dictionary:
@@ -46,6 +43,8 @@ static func from_dict(d: Dictionary) -> EquipData:
 	e.slot = str(d.get("slot", ""))
 	e.description = str(d.get("description", ""))
 	e.price = int(d.get("price", 0))
-	e.stat_mods = StatBlock.from_dict(d.get("stat_mods", {}))
+	# Bonuses, not base stats: a partial block like { "atk": 5 } must not
+	# pick up the 100/20/10 StatBlock defaults for the keys it omits.
+	e.stat_mods = StatBlock.from_dict_zero(d.get("stat_mods", {}))
 	e.note = str(d.get("note", ""))
 	return e

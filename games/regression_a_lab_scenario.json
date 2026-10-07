@@ -1,0 +1,309 @@
+{
+	"project": "games/regression_suite.rpgc",
+	"start_map_id": 0,
+	"steps": [
+		{
+			"action": "wait_frames",
+			"count": 5
+		},
+		{
+			"action": "expect_party_size",
+			"value": 2
+		},
+		{
+			"action": "expect_gold",
+			"value": 10
+		},
+		{
+			"action": "expect_switch",
+			"id": 14,
+			"value": true
+		},
+		{
+			"action": "expect_self_switch",
+			"id": 3,
+			"letter": "A",
+			"value": true
+		},
+		{
+			"action": "expect_actor_mp",
+			"actor_id": 1,
+			"value": 30
+		},
+		{
+			"action": "move",
+			"direction": "right",
+			"times": 1
+		},
+		{
+			"action": "move",
+			"direction": "left",
+			"times": 1
+		},
+		{
+			"action": "interact"
+		},
+		{
+			"action": "wait_frames",
+			"count": 5
+		},
+		{
+			"action": "expect_dialogue",
+			"contains": "Try them on",
+			"speaker": "Smith"
+		},
+		{
+			"action": "advance_dialogue"
+		},
+		{
+			"action": "wait_frames",
+			"count": 10
+		},
+		{
+			"action": "expect_actor_stat",
+			"actor_id": 0,
+			"stat": "atk",
+			"value": 17
+		},
+		{
+			"action": "expect_actor_stat",
+			"actor_id": 0,
+			"stat": "max_hp",
+			"value": 100
+		},
+		{
+			"action": "expect_actor_stat",
+			"actor_id": 0,
+			"stat": "max_mp",
+			"value": 20
+		},
+		{
+			"action": "expect_actor_stat",
+			"actor_id": 0,
+			"stat": "def",
+			"value": 11
+		},
+		{
+			"action": "expect_actor_stat",
+			"actor_id": 0,
+			"stat": "agi",
+			"value": 10
+		},
+		{
+			"action": "expect_actor_hp",
+			"actor_id": 0,
+			"value": 100
+		},
+		{
+			"action": "expect_item_count",
+			"kind": "equip",
+			"id": 0,
+			"value": 0
+		},
+		{
+			"action": "expect_item_count",
+			"kind": "equip",
+			"id": 1,
+			"value": 0
+		},
+		{
+			"action": "expect_self_switch",
+			"id": 0,
+			"letter": "A",
+			"value": true
+		},
+		{
+			"action": "interact"
+		},
+		{
+			"action": "wait_frames",
+			"count": 5
+		},
+		{
+			"action": "expect_dialogue",
+			"contains": "Hand the sword back"
+		},
+		{
+			"action": "advance_dialogue"
+		},
+		{
+			"action": "wait_frames",
+			"count": 10
+		},
+		{
+			"action": "expect_actor_stat",
+			"actor_id": 0,
+			"stat": "atk",
+			"value": 12
+		},
+		{
+			"action": "expect_actor_stat",
+			"actor_id": 0,
+			"stat": "def",
+			"value": 11
+		},
+		{
+			"action": "expect_item_count",
+			"kind": "equip",
+			"id": 0,
+			"value": 1
+		},
+		{
+			"action": "expect_self_switch",
+			"id": 0,
+			"letter": "B",
+			"value": true
+		},
+		{
+			"action": "move",
+			"direction": "left",
+			"times": 1
+		},
+		{
+			"action": "move",
+			"direction": "right",
+			"times": 1
+		},
+		{
+			"action": "interact"
+		},
+		{
+			"action": "wait_frames",
+			"count": 5
+		},
+		{
+			"action": "advance_dialogue"
+		},
+		{
+			"action": "wait_frames",
+			"count": 5
+		},
+		{
+			"action": "choose",
+			"index": 2
+		},
+		{
+			"action": "wait_frames",
+			"count": 5
+		},
+		{
+			"action": "expect_dialogue",
+			"contains": "Noted.",
+			"speaker": "Oracle"
+		},
+		{
+			"action": "advance_dialogue"
+		},
+		{
+			"action": "wait_frames",
+			"count": 10
+		},
+		{
+			"action": "expect_variable",
+			"id": 0,
+			"value": 2
+		},
+		{
+			"action": "expect_switch",
+			"id": 15,
+			"value": true
+		},
+		{
+			"action": "expect_self_switch",
+			"id": 1,
+			"letter": "A",
+			"value": true
+		},
+		{
+			"action": "interact"
+		},
+		{
+			"action": "wait_frames",
+			"count": 5
+		},
+		{
+			"action": "expect_dialogue",
+			"contains": "Green chosen",
+			"speaker": "Oracle"
+		},
+		{
+			"action": "advance_dialogue"
+		},
+		{
+			"action": "wait_frames",
+			"count": 5
+		},
+		{
+			"action": "move",
+			"direction": "down",
+			"times": 1
+		},
+		{
+			"action": "move",
+			"direction": "up",
+			"times": 1
+		},
+		{
+			"action": "interact"
+		},
+		{
+			"action": "wait_frames",
+			"count": 40
+		},
+		{
+			"action": "expect_variable",
+			"id": 20,
+			"value": 3
+		},
+		{
+			"action": "expect_variable",
+			"id": 21,
+			"value": 1
+		},
+		{
+			"action": "expect_variable",
+			"id": 22,
+			"value": 1
+		},
+		{
+			"action": "expect_switch",
+			"id": 13,
+			"value": true
+		},
+		{
+			"action": "move",
+			"direction": "up",
+			"times": 1
+		},
+		{
+			"action": "move",
+			"direction": "down",
+			"times": 1
+		},
+		{
+			"action": "interact"
+		},
+		{
+			"action": "wait_frames",
+			"count": 10
+		},
+		{
+			"action": "expect_actor_hp",
+			"actor_id": 1,
+			"value": 80
+		},
+		{
+			"action": "expect_item_count",
+			"kind": "item",
+			"id": 0,
+			"value": 0
+		},
+		{
+			"action": "expect_event_running",
+			"value": false
+		},
+		{
+			"action": "snapshot"
+		}
+	]
+}

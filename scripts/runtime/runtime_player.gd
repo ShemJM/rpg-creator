@@ -25,11 +25,13 @@ var _parallel_runners: Dictionary = {}    # event_id -> EventRunner
 var _last_active_pages: Dictionary = {}   # event_id -> active page index (-1 = none)
 var _pending_autoruns: Array = []         # EventData queued while another event runs
 var _refresh_queued: bool = false
+var _event_origins: Dictionary = {}       # EventData -> Vector2i authored position (restored on exit)
 
 
 func _ready() -> void:
 	GameState.reset()
 	_reset_all_event_runtime_state()
+	_remember_event_origins()
 	_current_map = ProjectState.get_current_map()
 	if _current_map == null:
 		SignalBus.playtest_stopped.emit()
@@ -146,13 +148,13 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel"):
 		SignalBus.playtest_stopped.emit()
 		get_viewport().set_input_as_handled()
-	elif event.is_action_pressed("ui_accept") and not _event_running:
+	elif event.is_action_pressed("ui_accept") and not _event_running and not GameState.game_over:
 		_try_interact()
 		get_viewport().set_input_as_handled()
 
 
 func _physics_process(_delta: float) -> void:
-	if _event_running or _player == null or _current_map == null:
+	if _event_running or GameState.game_over or _player == null or _current_map == null:
 		return
 	var player_grid := Vector2i(
 		int(_player.position.x) / CELL_SIZE,
@@ -175,7 +177,7 @@ func _physics_process(_delta: float) -> void:
 ## don't have to wait multiple physics frames for the velocity to resolve.
 ## direction: "left" | "right" | "up" | "down"
 func scripted_move(direction: String) -> void:
-	if _player == null or _event_running or _current_map == null:
+	if _player == null or _event_running or GameState.game_over or _current_map == null:
 		return
 	var current_grid := Vector2i(
 		int(_player.position.x) / CELL_SIZE,
@@ -208,7 +210,7 @@ func scripted_move(direction: String) -> void:
 
 ## Trigger the interact action programmatically (same as pressing ui_accept).
 func scripted_interact() -> void:
-	if not _event_running:
+	if not _event_running and not GameState.game_over:
 		_try_interact()
 
 
@@ -249,10 +251,12 @@ func get_snapshot() -> Dictionary:
 			var d: Vector2i = sprite.get_direction()
 			event_facing[str(event_id)] = { "x": d.x, "y": d.y }
 	var events_erased: Array = []
+	var event_positions: Dictionary = {}
 	if _current_map:
 		for ev: EventData in _current_map.events:
 			if ev.erased:
 				events_erased.append(ev.id)
+			event_positions[str(ev.id)] = { "x": ev.x, "y": ev.y }
 	var inventory_out: Dictionary = {}
 	for id in GameState.inventory:
 		inventory_out[str(id)] = GameState.inventory[id]
@@ -278,8 +282,10 @@ func get_snapshot() -> Dictionary:
 		"player_grid": { "x": player_grid.x, "y": player_grid.y },
 		"player_facing": { "x": player_facing.x, "y": player_facing.y },
 		"event_facing": event_facing,
+		"event_positions": event_positions,
 		"event_running": _event_running,
 		"events_erased": events_erased,
+		"game_over": GameState.game_over,
 		"switches_on": switches,
 		"variables": variables,
 		"gold": GameState.gold,
@@ -330,6 +336,9 @@ func _run_event(ev: EventData) -> void:
 
 func _on_event_finished() -> void:
 	_event_running = false
+	if GameState.game_over:
+		_pending_autoruns.clear()
+		return
 	# Run any autorun whose page became active while another event was running.
 	while not _pending_autoruns.is_empty():
 		var ev: EventData = _pending_autoruns.pop_front()
@@ -435,7 +444,7 @@ func _refresh_events() -> void:
 				visual.setup(page.graphic if page else null, page.graphic_color if page else Color(0.8, 0.2, 0.2))
 		if page_changed:
 			_last_active_pages[ev.id] = page_index
-			if page and page.trigger == EventPage.Trigger.AUTORUN:
+			if page and page.trigger == EventPage.Trigger.AUTORUN and not GameState.game_over:
 				if _event_running:
 					_pending_autoruns.append(ev)
 				else:
@@ -445,6 +454,9 @@ func _refresh_events() -> void:
 
 func _refresh_parallel_events() -> void:
 	if _current_map == null:
+		return
+	if GameState.game_over:
+		_stop_parallel_runners()
 		return
 	# Stop runners whose page is no longer an active parallel page.
 	for event_id in _parallel_runners.keys():
@@ -475,7 +487,7 @@ func _restart_parallel(ev: EventData, runner: EventRunner) -> void:
 	if _parallel_runners.get(ev.id) != runner:
 		return  # Runner was stopped/replaced in the meantime.
 	var page: EventPage = ev.get_active_page()
-	if page and page.trigger == EventPage.Trigger.PARALLEL:
+	if page and page.trigger == EventPage.Trigger.PARALLEL and not GameState.game_over:
 		runner.run_event(ev)
 	else:
 		runner.stop()
@@ -649,6 +661,10 @@ func _is_cell_passable(cell: Vector2i) -> bool:
 # ---------------------------------------------------------------------------
 
 func _on_game_over() -> void:
+	GameState.game_over = true
+	_event_running = false
+	_pending_autoruns.clear()
+	_stop_parallel_runners()
 	SignalBus.playtest_stopped.emit()
 
 
@@ -657,6 +673,30 @@ func _reset_all_event_runtime_state() -> void:
 		for ev: EventData in map.events:
 			ev.self_switches = { "A": false, "B": false, "C": false, "D": false }
 			ev.erased = false
+
+
+## MOVE_ROUTE walks events by mutating the shared EventData.x/y. Remember the
+## authored positions so they can be put back when the play-test ends —
+## otherwise a moved NPC stays moved for the next play-test (and the editor
+## would save it there).
+func _remember_event_origins() -> void:
+	_event_origins.clear()
+	for map: MapData in ProjectState.maps:
+		for ev: EventData in map.events:
+			_event_origins[ev] = Vector2i(ev.x, ev.y)
+
+
+func _restore_event_origins() -> void:
+	for ev in _event_origins:
+		if is_instance_valid(ev):
+			var origin: Vector2i = _event_origins[ev]
+			ev.x = origin.x
+			ev.y = origin.y
+	_event_origins.clear()
+
+
+func _exit_tree() -> void:
+	_restore_event_origins()
 
 
 func _find_map_by_id(map_id: int) -> MapData:

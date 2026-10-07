@@ -1,0 +1,53 @@
+{
+	"project": "games/regression_suite.rpgc",
+	"start_map_id": 3,
+	"steps": [
+		{
+			"action": "wait_frames",
+			"count": 5
+		},
+		{
+			"action": "move",
+			"direction": "down",
+			"times": 1
+		},
+		{
+			"action": "move",
+			"direction": "up",
+			"times": 1
+		},
+		{
+			"action": "interact"
+		},
+		{
+			"action": "wait_frames",
+			"count": 90
+		},
+		{
+			"action": "expect_switch",
+			"id": 60,
+			"value": true
+		},
+		{
+			"action": "expect_event_position",
+			"id": 0,
+			"x": 2,
+			"y": 3
+		},
+		{
+			"action": "expect_event_facing",
+			"id": 0,
+			"x": 1,
+			"y": 0
+		},
+		{
+			"action": "expect_position",
+			"map_id": 3,
+			"x": 4,
+			"y": 4
+		},
+		{
+			"action": "snapshot"
+		}
+	]
+}

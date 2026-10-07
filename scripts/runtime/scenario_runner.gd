@@ -19,6 +19,9 @@ extends Node
 ##     { "action": "expect_event_facing",  "id": 0, "x": 1, "y": 0 }, // event's facing vector
 ##     { "action": "expect_dialogue",      "contains": "Hello" },  // any dialogue so far
 ##     { "action": "expect_event_erased",  "id": 0, "value": true },
+##     { "action": "expect_event_position","id": 0, "x": 5, "y": 4 }, // event grid cell (after MOVE_ROUTE)
+##     { "action": "expect_self_switch",   "id": 0, "letter": "A", "value": true },
+##     { "action": "expect_actor_mp",      "actor_id": 0, "value": 10 }, // or "gte"
 ##     { "action": "expect_event_running", "value": false },
 ##     { "action": "expect_game_over" },
 ##     { "action": "snapshot" }         // emits trace_snapshot signal with current state
@@ -320,6 +323,52 @@ func _process_next_step() -> void:
 				er_actual == er_expected,
 				"expect_event_erased[%d] == %s : got %s" % [er_id, str(er_expected), str(er_actual)]
 			)
+			_process_next_step()
+
+		"expect_event_position":
+			var ep_id: int = int(step.get("id", 0))
+			var ep_x: int = int(step.get("x", 0))
+			var ep_y: int = int(step.get("y", 0))
+			var ep: Dictionary = _runtime.get_snapshot().get("event_positions", {}).get(str(ep_id), {})
+			_record_assertion(
+				ep.get("x", 999) == ep_x and ep.get("y", 999) == ep_y,
+				"expect_event_position[%d] (%d,%d) : got (%s,%s)" % [ep_id, ep_x, ep_y, str(ep.get("x")), str(ep.get("y"))]
+			)
+			_process_next_step()
+
+		"expect_self_switch":
+			var ss_id: int = int(step.get("id", 0))
+			var ss_letter: String = str(step.get("letter", "A"))
+			var ss_expected: bool = step.get("value", true)
+			var ss_actual: Variant = null
+			var ss_map: MapData = ProjectState.get_current_map()
+			if ss_map:
+				for ev: EventData in ss_map.events:
+					if ev.id == ss_id:
+						ss_actual = bool(ev.self_switches.get(ss_letter, false))
+						break
+			_record_assertion(
+				ss_actual != null and ss_actual == ss_expected,
+				"expect_self_switch[%d].%s == %s : got %s" % [ss_id, ss_letter, str(ss_expected), str(ss_actual) if ss_actual != null else "no such event on current map"]
+			)
+			_process_next_step()
+
+		"expect_actor_mp":
+			var am_id: int = int(step.get("actor_id", 0))
+			var am_member: Dictionary = GameState.get_member(am_id)
+			var am_actual: int = int(am_member.get("mp", -1))
+			if step.has("gte"):
+				var am_min: int = int(step["gte"])
+				_record_assertion(
+					not am_member.is_empty() and am_actual >= am_min,
+					"expect_actor_mp[%d] >= %d : got %d" % [am_id, am_min, am_actual]
+				)
+			else:
+				var am_expected: int = int(step.get("value", 0))
+				_record_assertion(
+					not am_member.is_empty() and am_actual == am_expected,
+					"expect_actor_mp[%d] == %d : got %d" % [am_id, am_expected, am_actual]
+				)
 			_process_next_step()
 
 		"expect_event_running":

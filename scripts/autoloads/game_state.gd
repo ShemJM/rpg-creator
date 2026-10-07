@@ -20,6 +20,9 @@ var equip_inventory: Dictionary = {}  # equip_id (int) -> count (int > 0)
 ## { "actor_id": int, "name": String, "hp": int, "mp": int,
 ##   "equipment": { "weapon": -1, "head": -1, "body": -1, "accessory": -1 } }
 var party: Array[Dictionary] = []
+## Set by GAME_OVER (or a party wipe). Once true the runtime ignores input,
+## stops parallel pages and never starts queued autoruns.
+var game_over: bool = false
 
 ## The single source of randomness for gameplay (battle variance). Seeded in
 ## reset(); scenarios may re-seed via a top-level "rng_seed".
@@ -38,6 +41,7 @@ func reset() -> void:
 	variables.resize(MAX_VARIABLES)
 	variables.fill(0)
 	rng.seed = DEFAULT_RNG_SEED
+	game_over = false
 	inventory.clear()
 	equip_inventory.clear()
 	_init_party_from_project()
@@ -259,6 +263,9 @@ func equip(actor_id: int, slot: String, equip_id: int) -> bool:
 	if equip_id >= 0:
 		var eq := ProjectState.get_equip_by_id(equip_id)
 		if eq == null or get_stock("equip", equip_id) < 1:
+			return false
+		# A piece only fits the slot it was authored for (a helmet is not a weapon).
+		if eq.slot != slot:
 			return false
 	var previous: int = int(member["equipment"].get(slot, -1))
 	if previous >= 0:

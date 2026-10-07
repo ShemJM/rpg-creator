@@ -1,0 +1,96 @@
+{
+	"project": "games/regression_suite.rpgc",
+	"start_map_id": 2,
+	"steps": [
+		{
+			"action": "wait_frames",
+			"count": 5
+		},
+		{
+			"action": "move",
+			"direction": "down",
+			"times": 1
+		},
+		{
+			"action": "move",
+			"direction": "up",
+			"times": 1
+		},
+		{
+			"action": "interact"
+		},
+		{
+			"action": "wait_frames",
+			"count": 5
+		},
+		{
+			"action": "expect_dialogue",
+			"contains": "Your tale ends"
+		},
+		{
+			"action": "advance_dialogue"
+		},
+		{
+			"action": "wait_frames",
+			"count": 10
+		},
+		{
+			"action": "expect_game_over",
+			"value": true
+		},
+		{
+			"action": "expect_switch",
+			"id": 40,
+			"value": true
+		},
+		{
+			"action": "expect_switch",
+			"id": 41,
+			"value": false
+		},
+		{
+			"action": "expect_switch",
+			"id": 51,
+			"value": false
+		},
+		{
+			"action": "expect_event_running",
+			"value": false
+		},
+		{
+			"action": "move",
+			"direction": "right",
+			"times": 2
+		},
+		{
+			"action": "wait_frames",
+			"count": 5
+		},
+		{
+			"action": "expect_position",
+			"map_id": 2,
+			"x": 4,
+			"y": 4
+		},
+		{
+			"action": "interact"
+		},
+		{
+			"action": "wait_frames",
+			"count": 10
+		},
+		{
+			"action": "expect_switch",
+			"id": 41,
+			"value": false
+		},
+		{
+			"action": "expect_switch",
+			"id": 51,
+			"value": false
+		},
+		{
+			"action": "snapshot"
+		}
+	]
+}

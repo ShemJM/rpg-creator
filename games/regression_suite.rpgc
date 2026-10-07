@@ -1,0 +1,1293 @@
+{
+	"version": 5,
+	"maps": [
+		{
+			"id": 0,
+			"map_name": "Lab",
+			"width": 9,
+			"height": 9,
+			"ground_layer": {
+				"0,0": 0,
+				"1,0": 0,
+				"2,0": 0,
+				"3,0": 0,
+				"4,0": 0,
+				"5,0": 0,
+				"6,0": 0,
+				"7,0": 0,
+				"8,0": 0,
+				"0,1": 0,
+				"1,1": 0,
+				"2,1": 0,
+				"3,1": 0,
+				"4,1": 0,
+				"5,1": 0,
+				"6,1": 0,
+				"7,1": 0,
+				"8,1": 0,
+				"0,2": 0,
+				"1,2": 0,
+				"2,2": 0,
+				"3,2": 0,
+				"4,2": 0,
+				"5,2": 0,
+				"6,2": 0,
+				"7,2": 0,
+				"8,2": 0,
+				"0,3": 0,
+				"1,3": 0,
+				"2,3": 0,
+				"3,3": 0,
+				"4,3": 0,
+				"5,3": 0,
+				"6,3": 0,
+				"7,3": 0,
+				"8,3": 0,
+				"0,4": 0,
+				"1,4": 0,
+				"2,4": 0,
+				"3,4": 0,
+				"4,4": 0,
+				"5,4": 0,
+				"6,4": 0,
+				"7,4": 0,
+				"8,4": 0,
+				"0,5": 0,
+				"1,5": 0,
+				"2,5": 0,
+				"3,5": 0,
+				"4,5": 0,
+				"5,5": 0,
+				"6,5": 0,
+				"7,5": 0,
+				"8,5": 0,
+				"0,6": 0,
+				"1,6": 0,
+				"2,6": 0,
+				"3,6": 0,
+				"4,6": 0,
+				"5,6": 0,
+				"6,6": 0,
+				"7,6": 0,
+				"8,6": 0,
+				"0,7": 0,
+				"1,7": 0,
+				"2,7": 0,
+				"3,7": 0,
+				"4,7": 0,
+				"5,7": 0,
+				"6,7": 0,
+				"7,7": 0,
+				"8,7": 0,
+				"0,8": 0,
+				"1,8": 0,
+				"2,8": 0,
+				"3,8": 0,
+				"4,8": 0,
+				"5,8": 0,
+				"6,8": 0,
+				"7,8": 0,
+				"8,8": 0
+			},
+			"surface_layer": {},
+			"events": [
+				{
+					"id": 0,
+					"event_name": "Smith",
+					"x": 3,
+					"y": 4,
+					"pages": [
+						{
+							"trigger": "ACTION_BUTTON",
+							"graphic_color": [
+								0.6,
+								0.6,
+								0.9,
+								1.0
+							],
+							"graphic": null,
+							"condition_switch_id": -1,
+							"condition_switch_value": true,
+							"condition_self_switch": "",
+							"condition_variable_id": -1,
+							"condition_variable_gte": 0,
+							"commands": [
+								{
+									"type": "SHOW_TEXT",
+									"params": {
+										"name": "Smith",
+										"lines": [
+											"Here: a sword and a helm. Try them on."
+										]
+									}
+								},
+								{
+									"type": "CHANGE_ITEMS",
+									"params": {
+										"kind": "equip",
+										"id": 0,
+										"op": "add",
+										"count": 1
+									}
+								},
+								{
+									"type": "CHANGE_ITEMS",
+									"params": {
+										"kind": "equip",
+										"id": 1,
+										"op": "add",
+										"count": 1
+									}
+								},
+								{
+									"type": "CHANGE_EQUIPMENT",
+									"params": {
+										"actor_id": 0,
+										"slot": "weapon",
+										"equip_id": 0
+									}
+								},
+								{
+									"type": "CHANGE_EQUIPMENT",
+									"params": {
+										"actor_id": 0,
+										"slot": "head",
+										"equip_id": 1
+									}
+								},
+								{
+									"type": "SET_SELF_SWITCH",
+									"params": {
+										"letter": "A",
+										"value": true
+									}
+								}
+							]
+						},
+						{
+							"trigger": "ACTION_BUTTON",
+							"graphic_color": [
+								0.6,
+								0.6,
+								0.9,
+								1.0
+							],
+							"graphic": null,
+							"condition_switch_id": -1,
+							"condition_switch_value": true,
+							"condition_self_switch": "A",
+							"condition_variable_id": -1,
+							"condition_variable_gte": 0,
+							"commands": [
+								{
+									"type": "SHOW_TEXT",
+									"params": {
+										"name": "Smith",
+										"lines": [
+											"Hand the sword back."
+										]
+									}
+								},
+								{
+									"type": "CHANGE_EQUIPMENT",
+									"params": {
+										"actor_id": 0,
+										"slot": "weapon",
+										"equip_id": -1
+									}
+								},
+								{
+									"type": "SET_SELF_SWITCH",
+									"params": {
+										"letter": "B",
+										"value": true
+									}
+								}
+							]
+						},
+						{
+							"trigger": "ACTION_BUTTON",
+							"graphic_color": [
+								0.6,
+								0.6,
+								0.9,
+								1.0
+							],
+							"graphic": null,
+							"condition_switch_id": -1,
+							"condition_switch_value": true,
+							"condition_self_switch": "B",
+							"condition_variable_id": -1,
+							"condition_variable_gte": 0,
+							"commands": [
+								{
+									"type": "SHOW_TEXT",
+									"params": {
+										"name": "Smith",
+										"lines": [
+											"Nothing left to try."
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"id": 1,
+					"event_name": "Oracle",
+					"x": 5,
+					"y": 4,
+					"pages": [
+						{
+							"trigger": "ACTION_BUTTON",
+							"graphic_color": [
+								0.6,
+								0.6,
+								0.9,
+								1.0
+							],
+							"graphic": null,
+							"condition_switch_id": -1,
+							"condition_switch_value": true,
+							"condition_self_switch": "",
+							"condition_variable_id": -1,
+							"condition_variable_gte": 0,
+							"commands": [
+								{
+									"type": "SHOW_TEXT",
+									"params": {
+										"name": "Oracle",
+										"lines": [
+											"Pick a colour."
+										]
+									}
+								},
+								{
+									"type": "SHOW_CHOICES",
+									"params": {
+										"choices": [
+											"Red",
+											"Blue",
+											"Green"
+										],
+										"cancel_index": -1
+									}
+								},
+								{
+									"type": "SHOW_TEXT",
+									"params": {
+										"name": "Oracle",
+										"lines": [
+											"Noted."
+										]
+									}
+								}
+							]
+						},
+						{
+							"trigger": "AUTORUN",
+							"graphic_color": [
+								0.6,
+								0.6,
+								0.9,
+								1.0
+							],
+							"graphic": null,
+							"condition_switch_id": -1,
+							"condition_switch_value": true,
+							"condition_self_switch": "",
+							"condition_variable_id": 0,
+							"condition_variable_gte": 2,
+							"commands": [
+								{
+									"type": "CONTROL_SWITCHES",
+									"params": {
+										"ids": [
+											15
+										],
+										"value": true
+									}
+								},
+								{
+									"type": "SET_SELF_SWITCH",
+									"params": {
+										"letter": "A",
+										"value": true
+									}
+								}
+							]
+						},
+						{
+							"trigger": "ACTION_BUTTON",
+							"graphic_color": [
+								0.6,
+								0.6,
+								0.9,
+								1.0
+							],
+							"graphic": null,
+							"condition_switch_id": -1,
+							"condition_switch_value": true,
+							"condition_self_switch": "A",
+							"condition_variable_id": -1,
+							"condition_variable_gte": 0,
+							"commands": [
+								{
+									"type": "SHOW_TEXT",
+									"params": {
+										"name": "Oracle",
+										"lines": [
+											"Green chosen. The gate hums."
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"id": 2,
+					"event_name": "Counter",
+					"x": 4,
+					"y": 3,
+					"pages": [
+						{
+							"trigger": "ACTION_BUTTON",
+							"graphic_color": [
+								0.6,
+								0.6,
+								0.9,
+								1.0
+							],
+							"graphic": null,
+							"condition_switch_id": -1,
+							"condition_switch_value": true,
+							"condition_self_switch": "",
+							"condition_variable_id": -1,
+							"condition_variable_gte": 0,
+							"commands": [
+								{
+									"type": "CONTROL_VARIABLES",
+									"params": {
+										"ids": [
+											20
+										],
+										"op": "set",
+										"value": 7
+									}
+								},
+								{
+									"type": "CONTROL_VARIABLES",
+									"params": {
+										"ids": [
+											20
+										],
+										"op": "mul",
+										"value": 3
+									}
+								},
+								{
+									"type": "CONTROL_VARIABLES",
+									"params": {
+										"ids": [
+											20
+										],
+										"op": "div",
+										"value": 4
+									}
+								},
+								{
+									"type": "CONTROL_VARIABLES",
+									"params": {
+										"ids": [
+											20
+										],
+										"op": "sub",
+										"value": 2
+									}
+								},
+								{
+									"type": "CONTROL_SWITCHES",
+									"params": {
+										"ids": [
+											12
+										],
+										"value": true
+									}
+								},
+								{
+									"type": "CONDITIONAL_BRANCH",
+									"params": {
+										"condition_type": "switch",
+										"id": 12,
+										"value": true,
+										"commands_if": [
+											{
+												"type": "CONTROL_VARIABLES",
+												"params": {
+													"ids": [
+														21
+													],
+													"op": "set",
+													"value": 1
+												}
+											}
+										],
+										"commands_else": [
+											{
+												"type": "CONTROL_VARIABLES",
+												"params": {
+													"ids": [
+														21
+													],
+													"op": "set",
+													"value": 99
+												}
+											}
+										]
+									}
+								},
+								{
+									"type": "CONDITIONAL_BRANCH",
+									"params": {
+										"condition_type": "self_switch",
+										"id": 0,
+										"value": "A",
+										"commands_if": [
+											{
+												"type": "CONTROL_VARIABLES",
+												"params": {
+													"ids": [
+														22
+													],
+													"op": "set",
+													"value": 99
+												}
+											}
+										],
+										"commands_else": [
+											{
+												"type": "CONTROL_VARIABLES",
+												"params": {
+													"ids": [
+														22
+													],
+													"op": "set",
+													"value": 1
+												}
+											}
+										]
+									}
+								},
+								{
+									"type": "WAIT",
+									"params": {
+										"frames": 6
+									}
+								},
+								{
+									"type": "CONTROL_SWITCHES",
+									"params": {
+										"ids": [
+											13
+										],
+										"value": true
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"id": 3,
+					"event_name": "Greeter",
+					"x": 2,
+					"y": 2,
+					"pages": [
+						{
+							"trigger": "AUTORUN",
+							"graphic_color": [
+								0.6,
+								0.6,
+								0.9,
+								1.0
+							],
+							"graphic": null,
+							"condition_switch_id": -1,
+							"condition_switch_value": true,
+							"condition_self_switch": "",
+							"condition_variable_id": -1,
+							"condition_variable_gte": 0,
+							"commands": [
+								{
+									"type": "CONTROL_SWITCHES",
+									"params": {
+										"ids": [
+											14
+										],
+										"value": true
+									}
+								},
+								{
+									"type": "SET_SELF_SWITCH",
+									"params": {
+										"letter": "A",
+										"value": true
+									}
+								}
+							]
+						},
+						{
+							"trigger": "ACTION_BUTTON",
+							"graphic_color": [
+								0.6,
+								0.6,
+								0.9,
+								1.0
+							],
+							"graphic": null,
+							"condition_switch_id": -1,
+							"condition_switch_value": true,
+							"condition_self_switch": "A",
+							"condition_variable_id": -1,
+							"condition_variable_gte": 0,
+							"commands": [
+								{
+									"type": "SHOW_TEXT",
+									"params": {
+										"name": "Greeter",
+										"lines": [
+											"Welcome back."
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"id": 4,
+					"event_name": "Herbalist",
+					"x": 4,
+					"y": 5,
+					"pages": [
+						{
+							"trigger": "ACTION_BUTTON",
+							"graphic_color": [
+								0.6,
+								0.6,
+								0.9,
+								1.0
+							],
+							"graphic": null,
+							"condition_switch_id": -1,
+							"condition_switch_value": true,
+							"condition_self_switch": "",
+							"condition_variable_id": -1,
+							"condition_variable_gte": 0,
+							"commands": [
+								{
+									"type": "CHANGE_ITEMS",
+									"params": {
+										"kind": "item",
+										"id": 0,
+										"op": "add",
+										"count": 1
+									}
+								},
+								{
+									"type": "CHANGE_HP",
+									"params": {
+										"actor_id": 1,
+										"op": "sub",
+										"value": 30
+									}
+								},
+								{
+									"type": "USE_ITEM",
+									"params": {
+										"item_id": 0,
+										"actor_id": 1
+									}
+								}
+							]
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 1,
+			"map_name": "Arena",
+			"width": 9,
+			"height": 9,
+			"ground_layer": {
+				"0,0": 0,
+				"1,0": 0,
+				"2,0": 0,
+				"3,0": 0,
+				"4,0": 0,
+				"5,0": 0,
+				"6,0": 0,
+				"7,0": 0,
+				"8,0": 0,
+				"0,1": 0,
+				"1,1": 0,
+				"2,1": 0,
+				"3,1": 0,
+				"4,1": 0,
+				"5,1": 0,
+				"6,1": 0,
+				"7,1": 0,
+				"8,1": 0,
+				"0,2": 0,
+				"1,2": 0,
+				"2,2": 0,
+				"3,2": 0,
+				"4,2": 0,
+				"5,2": 0,
+				"6,2": 0,
+				"7,2": 0,
+				"8,2": 0,
+				"0,3": 0,
+				"1,3": 0,
+				"2,3": 0,
+				"3,3": 0,
+				"4,3": 0,
+				"5,3": 0,
+				"6,3": 0,
+				"7,3": 0,
+				"8,3": 0,
+				"0,4": 0,
+				"1,4": 0,
+				"2,4": 0,
+				"3,4": 0,
+				"4,4": 0,
+				"5,4": 0,
+				"6,4": 0,
+				"7,4": 0,
+				"8,4": 0,
+				"0,5": 0,
+				"1,5": 0,
+				"2,5": 0,
+				"3,5": 0,
+				"4,5": 0,
+				"5,5": 0,
+				"6,5": 0,
+				"7,5": 0,
+				"8,5": 0,
+				"0,6": 0,
+				"1,6": 0,
+				"2,6": 0,
+				"3,6": 0,
+				"4,6": 0,
+				"5,6": 0,
+				"6,6": 0,
+				"7,6": 0,
+				"8,6": 0,
+				"0,7": 0,
+				"1,7": 0,
+				"2,7": 0,
+				"3,7": 0,
+				"4,7": 0,
+				"5,7": 0,
+				"6,7": 0,
+				"7,7": 0,
+				"8,7": 0,
+				"0,8": 0,
+				"1,8": 0,
+				"2,8": 0,
+				"3,8": 0,
+				"4,8": 0,
+				"5,8": 0,
+				"6,8": 0,
+				"7,8": 0,
+				"8,8": 0
+			},
+			"surface_layer": {},
+			"events": [
+				{
+					"id": 0,
+					"event_name": "Trainer",
+					"x": 4,
+					"y": 3,
+					"pages": [
+						{
+							"trigger": "ACTION_BUTTON",
+							"graphic_color": [
+								0.6,
+								0.6,
+								0.9,
+								1.0
+							],
+							"graphic": null,
+							"condition_switch_id": -1,
+							"condition_switch_value": true,
+							"condition_self_switch": "",
+							"condition_variable_id": -1,
+							"condition_variable_gte": 0,
+							"commands": [
+								{
+									"type": "BATTLE_PROCESSING",
+									"params": {
+										"enemies": [
+											0,
+											1
+										],
+										"can_flee": false,
+										"commands_win": [
+											{
+												"type": "CONTROL_SWITCHES",
+												"params": {
+													"ids": [
+														30
+													],
+													"value": true
+												}
+											}
+										],
+										"commands_lose": [
+											{
+												"type": "CONTROL_SWITCHES",
+												"params": {
+													"ids": [
+														31
+													],
+													"value": true
+												}
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 2,
+			"map_name": "Doom",
+			"width": 9,
+			"height": 9,
+			"ground_layer": {
+				"0,0": 0,
+				"1,0": 0,
+				"2,0": 0,
+				"3,0": 0,
+				"4,0": 0,
+				"5,0": 0,
+				"6,0": 0,
+				"7,0": 0,
+				"8,0": 0,
+				"0,1": 0,
+				"1,1": 0,
+				"2,1": 0,
+				"3,1": 0,
+				"4,1": 0,
+				"5,1": 0,
+				"6,1": 0,
+				"7,1": 0,
+				"8,1": 0,
+				"0,2": 0,
+				"1,2": 0,
+				"2,2": 0,
+				"3,2": 0,
+				"4,2": 0,
+				"5,2": 0,
+				"6,2": 0,
+				"7,2": 0,
+				"8,2": 0,
+				"0,3": 0,
+				"1,3": 0,
+				"2,3": 0,
+				"3,3": 0,
+				"4,3": 0,
+				"5,3": 0,
+				"6,3": 0,
+				"7,3": 0,
+				"8,3": 0,
+				"0,4": 0,
+				"1,4": 0,
+				"2,4": 0,
+				"3,4": 0,
+				"4,4": 0,
+				"5,4": 0,
+				"6,4": 0,
+				"7,4": 0,
+				"8,4": 0,
+				"0,5": 0,
+				"1,5": 0,
+				"2,5": 0,
+				"3,5": 0,
+				"4,5": 0,
+				"5,5": 0,
+				"6,5": 0,
+				"7,5": 0,
+				"8,5": 0,
+				"0,6": 0,
+				"1,6": 0,
+				"2,6": 0,
+				"3,6": 0,
+				"4,6": 0,
+				"5,6": 0,
+				"6,6": 0,
+				"7,6": 0,
+				"8,6": 0,
+				"0,7": 0,
+				"1,7": 0,
+				"2,7": 0,
+				"3,7": 0,
+				"4,7": 0,
+				"5,7": 0,
+				"6,7": 0,
+				"7,7": 0,
+				"8,7": 0,
+				"0,8": 0,
+				"1,8": 0,
+				"2,8": 0,
+				"3,8": 0,
+				"4,8": 0,
+				"5,8": 0,
+				"6,8": 0,
+				"7,8": 0,
+				"8,8": 0
+			},
+			"surface_layer": {},
+			"events": [
+				{
+					"id": 0,
+					"event_name": "Reaper",
+					"x": 4,
+					"y": 3,
+					"pages": [
+						{
+							"trigger": "ACTION_BUTTON",
+							"graphic_color": [
+								0.6,
+								0.6,
+								0.9,
+								1.0
+							],
+							"graphic": null,
+							"condition_switch_id": -1,
+							"condition_switch_value": true,
+							"condition_self_switch": "",
+							"condition_variable_id": -1,
+							"condition_variable_gte": 0,
+							"commands": [
+								{
+									"type": "SHOW_TEXT",
+									"params": {
+										"name": "Reaper",
+										"lines": [
+											"Your tale ends here."
+										]
+									}
+								},
+								{
+									"type": "CONTROL_SWITCHES",
+									"params": {
+										"ids": [
+											40
+										],
+										"value": true
+									}
+								},
+								{
+									"type": "GAME_OVER",
+									"params": {}
+								}
+							]
+						}
+					]
+				},
+				{
+					"id": 1,
+					"event_name": "Ghost",
+					"x": 6,
+					"y": 6,
+					"pages": [
+						{
+							"trigger": "ACTION_BUTTON",
+							"graphic_color": [
+								0.6,
+								0.6,
+								0.9,
+								1.0
+							],
+							"graphic": null,
+							"condition_switch_id": -1,
+							"condition_switch_value": true,
+							"condition_self_switch": "",
+							"condition_variable_id": -1,
+							"condition_variable_gte": 0,
+							"commands": []
+						},
+						{
+							"trigger": "AUTORUN",
+							"graphic_color": [
+								0.6,
+								0.6,
+								0.9,
+								1.0
+							],
+							"graphic": null,
+							"condition_switch_id": 40,
+							"condition_switch_value": true,
+							"condition_self_switch": "",
+							"condition_variable_id": -1,
+							"condition_variable_gte": 0,
+							"commands": [
+								{
+									"type": "CONTROL_SWITCHES",
+									"params": {
+										"ids": [
+											41
+										],
+										"value": true
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"id": 2,
+					"event_name": "Ticker",
+					"x": 1,
+					"y": 1,
+					"pages": [
+						{
+							"trigger": "ACTION_BUTTON",
+							"graphic_color": [
+								0.6,
+								0.6,
+								0.9,
+								1.0
+							],
+							"graphic": null,
+							"condition_switch_id": -1,
+							"condition_switch_value": true,
+							"condition_self_switch": "",
+							"condition_variable_id": -1,
+							"condition_variable_gte": 0,
+							"commands": []
+						},
+						{
+							"trigger": "PARALLEL",
+							"graphic_color": [
+								0.6,
+								0.6,
+								0.9,
+								1.0
+							],
+							"graphic": null,
+							"condition_switch_id": 40,
+							"condition_switch_value": true,
+							"condition_self_switch": "",
+							"condition_variable_id": -1,
+							"condition_variable_gte": 0,
+							"commands": [
+								{
+									"type": "CONTROL_SWITCHES",
+									"params": {
+										"ids": [
+											51
+										],
+										"value": true
+									}
+								}
+							]
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 3,
+			"map_name": "Path",
+			"width": 9,
+			"height": 9,
+			"ground_layer": {
+				"0,0": 0,
+				"1,0": 0,
+				"2,0": 0,
+				"3,0": 0,
+				"4,0": 0,
+				"5,0": 0,
+				"6,0": 0,
+				"7,0": 0,
+				"8,0": 0,
+				"0,1": 0,
+				"1,1": 0,
+				"2,1": 0,
+				"3,1": 0,
+				"4,1": 0,
+				"5,1": 0,
+				"6,1": 0,
+				"7,1": 0,
+				"8,1": 0,
+				"0,2": 0,
+				"1,2": 0,
+				"2,2": 0,
+				"3,2": 0,
+				"4,2": 0,
+				"5,2": 0,
+				"6,2": 0,
+				"7,2": 0,
+				"8,2": 0,
+				"0,3": 0,
+				"1,3": 0,
+				"2,3": 0,
+				"3,3": 0,
+				"4,3": 0,
+				"5,3": 0,
+				"6,3": 0,
+				"7,3": 0,
+				"8,3": 0,
+				"0,4": 0,
+				"1,4": 0,
+				"2,4": 0,
+				"3,4": 0,
+				"4,4": 0,
+				"5,4": 0,
+				"6,4": 0,
+				"7,4": 0,
+				"8,4": 0,
+				"0,5": 0,
+				"1,5": 0,
+				"2,5": 0,
+				"3,5": 0,
+				"4,5": 0,
+				"5,5": 0,
+				"6,5": 0,
+				"7,5": 0,
+				"8,5": 0,
+				"0,6": 0,
+				"1,6": 0,
+				"2,6": 0,
+				"3,6": 0,
+				"4,6": 0,
+				"5,6": 0,
+				"6,6": 0,
+				"7,6": 0,
+				"8,6": 0,
+				"0,7": 0,
+				"1,7": 0,
+				"2,7": 0,
+				"3,7": 0,
+				"4,7": 0,
+				"5,7": 0,
+				"6,7": 0,
+				"7,7": 0,
+				"8,7": 0,
+				"0,8": 0,
+				"1,8": 0,
+				"2,8": 0,
+				"3,8": 0,
+				"4,8": 0,
+				"5,8": 0,
+				"6,8": 0,
+				"7,8": 0,
+				"8,8": 0
+			},
+			"surface_layer": {},
+			"events": [
+				{
+					"id": 0,
+					"event_name": "Walker",
+					"x": 4,
+					"y": 3,
+					"pages": [
+						{
+							"trigger": "ACTION_BUTTON",
+							"graphic_color": [
+								0.6,
+								0.6,
+								0.9,
+								1.0
+							],
+							"graphic": null,
+							"condition_switch_id": -1,
+							"condition_switch_value": true,
+							"condition_self_switch": "",
+							"condition_variable_id": -1,
+							"condition_variable_gte": 0,
+							"commands": [
+								{
+									"type": "MOVE_ROUTE",
+									"params": {
+										"target": "this",
+										"steps": [
+											"left",
+											"left",
+											"turn_toward_player"
+										],
+										"wait_for_completion": true
+									}
+								},
+								{
+									"type": "CONTROL_SWITCHES",
+									"params": {
+										"ids": [
+											60
+										],
+										"value": true
+									}
+								}
+							]
+						}
+					]
+				}
+			]
+		}
+	],
+	"system": {
+		"starting_party": [
+			0,
+			1
+		],
+		"starting_gold": 10
+	},
+	"database": {
+		"actors": [
+			{
+				"id": 0,
+				"actor_name": "Rook",
+				"class_id": 0,
+				"initial_level": 1,
+				"graphic": null,
+				"note": "",
+				"stats": {
+					"max_hp": 100,
+					"max_mp": 20,
+					"atk": 12,
+					"def": 8,
+					"mat": 10,
+					"mdf": 10,
+					"agi": 10,
+					"luk": 10
+				}
+			},
+			{
+				"id": 1,
+				"actor_name": "Ivy",
+				"class_id": 0,
+				"initial_level": 1,
+				"graphic": null,
+				"note": "",
+				"stats": {
+					"max_hp": 80,
+					"max_mp": 30,
+					"atk": 9,
+					"def": 6,
+					"mat": 10,
+					"mdf": 10,
+					"agi": 14,
+					"luk": 10
+				}
+			}
+		],
+		"classes": [
+			{
+				"id": 0,
+				"class_name": "Recruit",
+				"note": "",
+				"stats": {
+					"max_hp": 100,
+					"max_mp": 20,
+					"atk": 10,
+					"def": 10,
+					"mat": 10,
+					"mdf": 10,
+					"agi": 10,
+					"luk": 10
+				}
+			}
+		],
+		"items": [
+			{
+				"id": 0,
+				"item_name": "Potion",
+				"description": "Restores 30 HP.",
+				"price": 50,
+				"consumable": true,
+				"effect": {
+					"hp": 30,
+					"mp": 0
+				}
+			}
+		],
+		"equipment": [
+			{
+				"id": 0,
+				"equip_name": "Partial Sword",
+				"kind": "weapon",
+				"slot": "weapon",
+				"description": "",
+				"price": 60,
+				"note": "stat_mods lists only atk on purpose",
+				"stat_mods": {
+					"atk": 5
+				}
+			},
+			{
+				"id": 1,
+				"equip_name": "Iron Helm",
+				"kind": "armor",
+				"slot": "head",
+				"description": "",
+				"price": 40,
+				"note": "",
+				"stat_mods": {
+					"max_hp": 0,
+					"max_mp": 0,
+					"atk": 0,
+					"def": 3,
+					"mat": 0,
+					"mdf": 0,
+					"agi": 0,
+					"luk": 0
+				}
+			}
+		],
+		"enemies": [
+			{
+				"id": 0,
+				"enemy_name": "Rat",
+				"gold_reward": 5,
+				"item_rewards": [],
+				"note": "",
+				"stats": {
+					"max_hp": 7,
+					"max_mp": 0,
+					"atk": 6,
+					"def": 2,
+					"mat": 5,
+					"mdf": 5,
+					"agi": 5,
+					"luk": 5
+				}
+			},
+			{
+				"id": 1,
+				"enemy_name": "Bat",
+				"gold_reward": 7,
+				"item_rewards": [],
+				"note": "",
+				"stats": {
+					"max_hp": 7,
+					"max_mp": 0,
+					"atk": 6,
+					"def": 2,
+					"mat": 5,
+					"mdf": 5,
+					"agi": 20,
+					"luk": 5
+				}
+			}
+		]
+	}
+}
