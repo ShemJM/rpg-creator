@@ -1,0 +1,58 @@
+[
+	{
+		"message": "must be a positive integer",
+		"path": "timeout_frames"
+	},
+	{
+		"message": "project has no map with id 7",
+		"path": "start_map_id"
+	},
+	{
+		"message": "wait_frames needs a positive integer \"count\"",
+		"path": "steps[0].count"
+	},
+	{
+		"message": "move \"times\" must be a positive integer",
+		"path": "steps[1].times"
+	},
+	{
+		"message": "unknown action \"teleport\" (allowed: [\"move\", \"interact\", \"advance_dialogue\", \"choose\", \"wait_frames\", \"expect_switch\", \"expect_variable\", \"expect_position\", \"expect_player_facing\", \"expect_event_facing\", \"expect_dialogue\", \"expect_event_erased\", \"expect_event_running\", \"expect_game_over\", \"expect_gold\", \"expect_item_count\", \"expect_party_size\", \"expect_actor_hp\", \"expect_actor_stat\", \"shop_buy\", \"shop_sell\", \"shop_close\", \"expect_shop_open\", \"battle_attack\", \"battle_item\", \"battle_flee\", \"expect_battle_active\", \"expect_battle_result\", \"expect_enemy_hp\", \"expect_event_position\", \"expect_actor_mp\", \"expect_self_switch\", \"snapshot\"])",
+		"path": "steps[2].action"
+	},
+	{
+		"message": "expect_position (99,1) is outside map 0 bounds 20x15",
+		"path": "steps[3]"
+	},
+	{
+		"message": "no event with id 99 in the project",
+		"path": "steps[4].id"
+	},
+	{
+		"message": "no actor with id 99 in the project database",
+		"path": "steps[5].actor_id"
+	},
+	{
+		"message": "no item with id 42 in the project database",
+		"path": "steps[6].id"
+	},
+	{
+		"message": "no event with id 0 in the project",
+		"path": "steps[7].id"
+	},
+	{
+		"message": "expect_self_switch needs \"letter\" A-D",
+		"path": "steps[7].letter"
+	},
+	{
+		"message": "expect_self_switch \"value\" must be a boolean",
+		"path": "steps[7].value"
+	},
+	{
+		"message": "expect_dialogue needs \"contains\" and/or \"speaker\"",
+		"path": "steps[8]"
+	},
+	{
+		"message": "battle_attack \"target\" must be a non-negative enemy index",
+		"path": "steps[9].target"
+	}
+]

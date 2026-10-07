@@ -30,6 +30,9 @@ Usage:
   --project  <path>      Load a project (use with --list-maps or --scenario).
   --validate <path>      Lint a project or scenario file (exit 1 on errors).
   --resave   <path>      Load a project and save it back (migrates schema).
+                         With --output <path> the result is written there.
+  --roundtrip-all [dir]  Check every project in a directory re-serializes
+                         idempotently and still validates. Exit 1 on failure.
   --list-maps            Print a JSON array of all maps and exit.
   --list-database        Print a JSON summary of the project database and exit.
   --map-id   <int>       Override the start map id for --scenario.
@@ -63,9 +66,17 @@ func _ready() -> void:
 			push_error("[Headless] Could not load project: %s" % resave_path)
 			get_tree().quit(2)
 			return
-		ProjectState.save(resave_path)
-		print("[Headless] Re-saved %s at schema version %d" % [resave_path, ProjectState.serialize()["version"]])
+		var target: String = output_path if not output_path.is_empty() else resave_path
+		ProjectState.save(target)
+		print("[Headless] Re-saved %s -> %s at schema version %d" % [resave_path, target, ProjectState.serialize()["version"]])
 		get_tree().quit(0)
+		return
+
+	if "--roundtrip-all" in args:
+		var rt_dir: String = _get_arg(args, "--roundtrip-all")
+		if rt_dir.is_empty() or rt_dir.begins_with("--"):
+			rt_dir = "games"
+		_roundtrip_all(rt_dir, output_path)
 		return
 
 	# Load project if given. A scenario may instead name its own project
@@ -150,6 +161,58 @@ func _validate(path: String, output_path: String = "") -> void:
 	get_tree().quit(0 if errors.is_empty() else 1)
 
 
+## For every project file in a directory: load -> serialize (A) -> load A ->
+## serialize (B). A must equal B textually, and A must pass the validator.
+## This is what guards editor re-saves against drifting the file format.
+func _roundtrip_all(dir_path: String, output_path: String = "") -> void:
+	var dir := DirAccess.open(dir_path)
+	if dir == null:
+		push_error("[Headless] Cannot open directory: %s" % dir_path)
+		get_tree().quit(2)
+		return
+	var files: Array = []
+	for f in dir.get_files():
+		if f.ends_with(".rpgc") or f.ends_with(".rpgm"):
+			files.append(dir_path.path_join(f))
+	files.sort()
+	var report: Array = []
+	var failed: int = 0
+	for f in files:
+		var entry: Dictionary = { "file": f, "ok": true, "errors": [] }
+		if not ProjectState.load_from(f):
+			entry["ok"] = false
+			entry["errors"].append("could not load")
+		else:
+			var a_dict: Dictionary = ProjectState.serialize()
+			var a_text := JSON.stringify(a_dict, "\t")
+			var a_parsed: Variant = JSON.parse_string(a_text)
+			ProjectState.deserialize(a_parsed)
+			var b_text := JSON.stringify(ProjectState.serialize(), "\t")
+			if a_text != b_text:
+				entry["ok"] = false
+				entry["errors"].append("serialize(deserialize(serialize(x))) differs from serialize(x) — see %s" % _write_roundtrip_diff(f, a_text, b_text))
+			var verrors: Array = ProjectValidator.validate_project(a_parsed)
+			for e in verrors:
+				entry["ok"] = false
+				entry["errors"].append("re-saved file fails validation: %s: %s" % [e["path"], e["message"]])
+		if not entry["ok"]:
+			failed += 1
+		report.append(entry)
+		print("[Headless:roundtrip] %s: %s" % [f, "OK" if entry["ok"] else "FAIL " + str(entry["errors"])])
+	var out := { "projects": report, "failed": failed }
+	if not output_path.is_empty():
+		_write_file(output_path, JSON.stringify(out, "\t"))
+	get_tree().quit(0 if failed == 0 else 1)
+
+
+## Dump both serializations next to bin/ so a human can diff them.
+func _write_roundtrip_diff(source: String, a_text: String, b_text: String) -> String:
+	var base := "bin/roundtrip_%s" % source.get_file().get_basename()
+	_write_file(base + ".a.json", a_text)
+	_write_file(base + ".b.json", b_text)
+	return base + ".{a,b}.json"
+
+
 func _run_scenario(path: String, output_path: String = "") -> void:
 	var results: Dictionary = await _run_scenario_once(path)
 	if results.is_empty():
@@ -217,6 +280,10 @@ func _run_scenario_once(path: String) -> Dictionary:
 
 	var embedded_project: String = scenario.get("project", "")
 	if not embedded_project.is_empty():
+		# Lint before running: deserialization is lenient (an unknown command
+		# type silently becomes SHOW_TEXT), so a typo must stop the run here.
+		if not _validate_before_run(embedded_project, scenario, path):
+			return {}
 		if not ProjectState.load_from(embedded_project):
 			push_error("[Headless] Could not load scenario project: %s" % embedded_project)
 			return {}
@@ -263,6 +330,31 @@ func _run_scenario_once(path: String) -> Dictionary:
 	runtime.queue_free()
 	await get_tree().process_frame
 	return holder["results"]
+
+
+## Validate the project and the scenario (cross-checked against the project).
+## Prints every error and returns false if there are any.
+func _validate_before_run(project_path: String, scenario: Dictionary, scenario_path: String) -> bool:
+	if not FileAccess.file_exists(project_path):
+		push_error("[Headless] Scenario project not found: %s" % project_path)
+		return false
+	var pf := FileAccess.open(project_path, FileAccess.READ)
+	var project_data: Variant = JSON.parse_string(pf.get_as_text())
+	pf.close()
+	if not project_data is Dictionary:
+		push_error("[Headless] Scenario project is not valid JSON: %s" % project_path)
+		return false
+	var errors: Array = []
+	for e in ProjectValidator.validate_project(project_data):
+		errors.append({ "file": project_path, "path": e["path"], "message": e["message"] })
+	for e in ProjectValidator.validate_scenario(scenario, project_data):
+		errors.append({ "file": scenario_path, "path": e["path"], "message": e["message"] })
+	if errors.is_empty():
+		return true
+	for e in errors:
+		push_error("[Headless] validation: %s: %s: %s" % [e["file"], e["path"], e["message"]])
+	push_error("[Headless] %s: %d validation error(s) — not running (fix them or use --validate)" % [scenario_path, errors.size()])
+	return false
 
 
 static func _write_file(path: String, content: String) -> void:

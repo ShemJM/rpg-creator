@@ -1,0 +1,118 @@
+[
+	{
+		"message": "cell (9,9) outside map bounds 5x5",
+		"path": "maps[0].ground_layer[\"9,9\"]"
+	},
+	{
+		"message": "unknown tile id: 42.0",
+		"path": "maps[0].ground_layer[\"1,0\"]"
+	},
+	{
+		"message": "event at (10,10) outside map bounds 5x5",
+		"path": "maps[0].events[0]"
+	},
+	{
+		"message": "unknown trigger (0-3 or one of [\"ACTION_BUTTON\", \"PLAYER_TOUCH\", \"AUTORUN\", \"PARALLEL\"]): 7.0",
+		"path": "maps[0].events[0].pages[0].trigger"
+	},
+	{
+		"message": "duplicate LABEL \"dup\" in the same command list",
+		"path": "maps[0].events[0].pages[0].commands[10].params.name"
+	},
+	{
+		"message": "unknown command type (integer 0-22 or one of [\"SHOW_TEXT\", \"SHOW_CHOICES\", \"CONTROL_SWITCHES\", \"CONTROL_VARIABLES\", \"CONDITIONAL_BRANCH\", \"TRANSFER_PLAYER\", \"SET_SELF_SWITCH\", \"WAIT\", \"PLAY_SE\", \"FADE_OUT\", \"FADE_IN\", \"ERASE_EVENT\", \"LABEL\", \"JUMP_TO_LABEL\", \"GAME_OVER\", \"MOVE_ROUTE\", \"CHANGE_GOLD\", \"CHANGE_ITEMS\", \"CHANGE_HP\", \"CHANGE_EQUIPMENT\", \"USE_ITEM\", \"SHOP_PROCESSING\", \"BATTLE_PROCESSING\"]): 99.0",
+		"path": "maps[0].events[0].pages[0].commands[0].type"
+	},
+	{
+		"message": "TRANSFER_PLAYER target map does not exist: 3.0",
+		"path": "maps[0].events[0].pages[0].commands[1].params.map_id"
+	},
+	{
+		"message": "no LABEL named \"missing_label\" reachable from here (same command list or page top level)",
+		"path": "maps[0].events[0].pages[0].commands[2].params.name"
+	},
+	{
+		"message": "SHOW_CHOICES needs a non-empty \"choices\" array",
+		"path": "maps[0].events[0].pages[0].commands[3].params.choices"
+	},
+	{
+		"message": "variable id out of range (0..99): 200.0",
+		"path": "maps[0].events[0].pages[0].commands[4].params.ids[0]"
+	},
+	{
+		"message": "op must be one of [\"set\", \"add\", \"sub\", \"mul\", \"div\"], got \"divide\"",
+		"path": "maps[0].events[0].pages[0].commands[4].params.op"
+	},
+	{
+		"message": "letter must be A-D",
+		"path": "maps[0].events[0].pages[0].commands[5].params.letter"
+	},
+	{
+		"message": "target must be one of [\"player\", \"this\"]",
+		"path": "maps[0].events[0].pages[0].commands[6].params.target"
+	},
+	{
+		"message": "unknown step \"teleport\" (allowed: [\"up\", \"down\", \"left\", \"right\", \"wait\", \"face_up\", \"face_down\", \"face_left\", \"face_right\", \"turn_toward_player\"])",
+		"path": "maps[0].events[0].pages[0].commands[6].params.steps[0]"
+	},
+	{
+		"message": "unknown item id: 99.0",
+		"path": "maps[0].events[0].pages[0].commands[7].params.item_id"
+	},
+	{
+		"message": "slot must be one of [\"weapon\", \"head\", \"body\", \"accessory\"]",
+		"path": "maps[0].events[0].pages[0].commands[8].params.slot"
+	},
+	{
+		"message": "unknown equipment id: 42 (-1 = unequip)",
+		"path": "maps[0].events[0].pages[0].commands[8].params.equip_id"
+	},
+	{
+		"message": "switch condition needs a boolean value (true/false)",
+		"path": "maps[0].events[0].pages[0].commands[11].params.value"
+	},
+	{
+		"message": "no LABEL named \"inner\" reachable from here (same command list or page top level)",
+		"path": "maps[0].events[0].pages[0].commands[12].params.name"
+	},
+	{
+		"message": "equipment 1 is a \"head\" piece and cannot be equipped in slot \"weapon\" (the runtime rejects it)",
+		"path": "maps[0].events[0].pages[0].commands[13].params.slot"
+	},
+	{
+		"message": "duplicate event id 0 in map",
+		"path": "maps[0].events[1].id"
+	},
+	{
+		"message": "duplicate items id 0 (lookups always return the first)",
+		"path": "database.items[1].id"
+	},
+	{
+		"message": "unknown stat (allowed: [\"max_hp\", \"max_mp\", \"atk\", \"def\", \"mat\", \"mdf\", \"agi\", \"luk\"])",
+		"path": "database.equipment[0].stat_mods.attack"
+	},
+	{
+		"message": "references missing class id 5",
+		"path": "database.actors[0].class_id"
+	},
+	{
+		"message": "kind must be \"weapon\" or \"armor\"",
+		"path": "database.equipment[0].kind"
+	},
+	{
+		"message": "slot must be one of [\"weapon\", \"head\", \"body\", \"accessory\"], got \"\"",
+		"path": "database.equipment[0].slot"
+	},
+	{
+		"message": "a weapon must use slot \"weapon\", got \"head\"",
+		"path": "database.equipment[2].slot"
+	},
+	{
+		"message": "unknown actor id: 99.0",
+		"path": "system.starting_party[0]"
+	},
+	{
+		"message": "must be a non-negative integer",
+		"path": "system.starting_gold"
+	}
+]

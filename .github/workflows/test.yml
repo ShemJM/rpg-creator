@@ -7,6 +7,7 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
 
@@ -14,10 +15,26 @@ jobs:
         uses: actions/cache@v4
         with:
           path: bin/godot
-          key: godot-${{ runner.os }}-4.6
+          key: godot-${{ runner.os }}-4.6-${{ hashFiles('scripts/setup-godot.sh') }}
+
+      # Godot's import cache: saves the re-import on every boot.
+      - name: Cache Godot import data
+        uses: actions/cache@v4
+        with:
+          path: .godot
+          key: godot-import-${{ runner.os }}-${{ hashFiles('project.godot', 'icon.svg') }}
 
       - name: Install Godot
         run: make setup
 
       - name: Run scenario tests
         run: make test
+
+      # Results/trace JSON for post-mortem when something fails.
+      - name: Upload headless outputs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: headless-outputs
+          path: bin/*.json
+          if-no-files-found: ignore

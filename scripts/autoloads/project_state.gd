@@ -495,8 +495,12 @@ func deserialize(data: Dictionary) -> void:
 	player_graphic = CharacterGraphic.from_dict(pg) if pg is Dictionary else null
 	# System settings (added in version 5; defaults when absent).
 	var sys: Variant = data.get("system", {})
+	var starting_party: Array = []
+	if sys is Dictionary and (sys as Dictionary).get("starting_party", null) is Array:
+		for actor_id in (sys as Dictionary)["starting_party"]:
+			starting_party.append(int(actor_id))  # JSON numbers parse as floats.
 	system_settings = {
-		"starting_party": (sys as Dictionary).get("starting_party", []) if sys is Dictionary else [],
+		"starting_party": starting_party,
 		"starting_gold": int((sys as Dictionary).get("starting_gold", 0)) if sys is Dictionary else 0,
 	}
 	# Database (added in version 3; absent in older projects → empty).
@@ -582,11 +586,28 @@ const _BRANCH_KEYS: Array[String] = ["commands_if", "commands_else", "commands_w
 
 
 func _serialize_command(cmd: EventCommand) -> Dictionary:
-	var params: Dictionary = cmd.params.duplicate(true)
+	var params: Dictionary = _normalize_numbers(cmd.params.duplicate(true))
 	for key in _BRANCH_KEYS:
 		if params.has(key):
 			params[key] = _serialize_command_array(params[key])
 	return { "type": EventCommand.Type.keys()[cmd.type], "params": params }
+
+
+## JSON parses every number as a float, so a loaded-then-saved file would
+## turn "id": 3 into "id": 3.0. Write whole floats back as ints (recursively)
+## so re-saving is idempotent and diffs stay clean.
+static func _normalize_numbers(value: Variant) -> Variant:
+	if value is float and value == floorf(value):
+		return int(value)
+	if value is Dictionary:
+		for key in value:
+			value[key] = _normalize_numbers(value[key])
+		return value
+	if value is Array:
+		for i in range(value.size()):
+			value[i] = _normalize_numbers(value[i])
+		return value
+	return value
 
 
 func _serialize_command_array(cmds: Array) -> Array:

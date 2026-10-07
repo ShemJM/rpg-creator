@@ -1,0 +1,53 @@
+{
+	"project": "games/test.rpgm",
+	"start_map_id": 7,
+	"timeout_frames": 0,
+	"steps": [
+		{
+			"action": "wait_frames",
+			"count": 0
+		},
+		{
+			"action": "move",
+			"direction": "right",
+			"times": 0
+		},
+		{
+			"action": "teleport"
+		},
+		{
+			"action": "expect_position",
+			"map_id": 0,
+			"x": 99,
+			"y": 1
+		},
+		{
+			"action": "expect_event_erased",
+			"id": 99
+		},
+		{
+			"action": "expect_actor_hp",
+			"actor_id": 99,
+			"value": 1
+		},
+		{
+			"action": "expect_item_count",
+			"kind": "item",
+			"id": 42,
+			"value": 1
+		},
+		{
+			"action": "expect_self_switch",
+			"id": 0,
+			"letter": "Q",
+			"value": "yes"
+		},
+		{
+			"action": "expect_dialogue"
+		},
+		{
+			"action": "battle_attack",
+			"target": -1
+		}
+	]
+}
